@@ -10,20 +10,20 @@
 <div class="auth-container">
     <h2>Forgot Password</h2>
 
-    <c:if test="${not empty error}">
-        <div class="alert error">${error}</div>
-    </c:if>
+    <% if (request.getAttribute("error") != null) { %>
+        <div class="alert error"><%= request.getAttribute("error") %></div>
+    <% } %>
 
-    <c:if test="${not empty message}">
-        <div class="alert success">${message}</div>
-    </c:if>
+    <% if (request.getAttribute("message") != null) { %>
+        <div class="alert success"><%= request.getAttribute("message") %></div>
+    <% } %>
 
-    <c:if test="${not empty token}">
+    <% if (request.getAttribute("token") != null) { %>
         <div class="alert info">
             Demo reset token (for academic testing):<br>
-            <strong>${token}</strong>
+            <strong><%= request.getAttribute("token") %></strong>
         </div>
-    </c:if>
+    <% } %>
 
     <form method="post" action="${pageContext.request.contextPath}/forgot-password" class="auth-form">
         <label for="email">Registered Email</label>

@@ -10,9 +10,9 @@
 <div class="auth-container">
     <h2>Reset Password</h2>
 
-    <c:if test="${not empty error}">
-        <div class="alert error">${error}</div>
-    </c:if>
+    <% if (request.getAttribute("error") != null) { %>
+        <div class="alert error"><%= request.getAttribute("error") %></div>
+    <% } %>
 
     <form method="post" action="${pageContext.request.contextPath}/reset-password" class="auth-form">
         <label for="email">Registered Email</label>

@@ -10,9 +10,9 @@
 <div class="auth-container">
     <h2>Family Member Registration</h2>
 
-    <c:if test="${not empty error}">
-        <div class="alert error">${error}</div>
-    </c:if>
+    <% if (request.getAttribute("error") != null) { %>
+        <div class="alert error"><%= request.getAttribute("error") %></div>
+    <% } %>
 
     <form method="post" action="${pageContext.request.contextPath}/register" class="auth-form">
         <label for="fullName">Full Name</label>

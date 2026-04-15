@@ -10,17 +10,17 @@
 <div class="auth-container">
     <h2>Secure Login</h2>
 
-    <c:if test="${not empty param.message && param.message eq 'loggedout'}">
+    <% if (request.getParameter("message") != null && "loggedout".equals(request.getParameter("message"))) { %>
         <div class="alert success">You have been logged out.</div>
-    </c:if>
+    <% } %>
 
-    <c:if test="${not empty error}">
-        <div class="alert error">${error}</div>
-    </c:if>
+    <% if (request.getAttribute("error") != null) { %>
+        <div class="alert error"><%= request.getAttribute("error") %></div>
+    <% } %>
 
-    <c:if test="${not empty message}">
-        <div class="alert success">${message}</div>
-    </c:if>
+    <% if (request.getAttribute("message") != null) { %>
+        <div class="alert success"><%= request.getAttribute("message") %></div>
+    <% } %>
 
     <form method="post" action="${pageContext.request.contextPath}/login" class="auth-form">
         <label for="email">Email</label>

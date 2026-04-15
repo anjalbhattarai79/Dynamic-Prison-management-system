@@ -1,0 +1,24 @@
+.env
+Master Prompt.md 
+
+# Build output
+/build/
+/target/
+/bin/
+
+# Java compiled classes and logs
+*.class
+*.log
+
+# Eclipse project files
+.classpath
+.project
+.settings/
+
+# IntelliJ IDEA project files
+.idea/
+*.iml
+
+# OS-specific files
+.DS_Store
+Thumbs.db

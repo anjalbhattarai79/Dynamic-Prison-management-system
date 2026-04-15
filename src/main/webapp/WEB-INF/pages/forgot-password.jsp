@@ -5,10 +5,21 @@
     <meta charset="UTF-8">
     <title>Forgot Password - Prison Management System</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/home.css">
-</head>
+________________________________________________________________________________</head>
 <body>
-<div class="auth-container">
-    <h2>Forgot Password</h2>
+<div class="page-shell">
+    <header class="top-nav">
+        <div class="top-nav-title">Secure Prison Management</div>
+        <div class="top-nav-actions">
+            <a href="${pageContext.request.contextPath}/login">Back to login</a>
+        </div>
+    </header>
+    <main class="page-main">
+        <div class="auth-container">
+            <div class="card-header">
+                <h2 class="card-title">Forgot your password?</h2>
+                <p class="card-subtitle">We will send a reset link/token to your email</p>
+            </div>
 
     <% if (request.getAttribute("error") != null) { %>
         <div class="alert error"><%= request.getAttribute("error") %></div>

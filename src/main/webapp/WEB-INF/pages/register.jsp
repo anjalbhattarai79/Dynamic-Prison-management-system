@@ -5,10 +5,22 @@
     <meta charset="UTF-8">
     <title>Family Registration - Prison Management System</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/home.css">
-</head>
+________________________________________________________________________________</head>
 <body>
-<div class="auth-container">
-    <h2>Family Member Registration</h2>
+<div class="page-shell">
+    <header class="top-nav">
+        <div class="top-nav-title">Secure Prison Management</div>
+        <div class="top-nav-actions">
+            <a href="${pageContext.request.contextPath}/home">Home</a>
+            <a href="${pageContext.request.contextPath}/login">Login</a>
+        </div>
+    </header>
+    <main class="page-main">
+        <div class="auth-container">
+            <div class="card-header">
+                <h2 class="card-title">Create family account</h2>
+                <p class="card-subtitle">Access prisoner information and request visits</p>
+            </div>
 
     <% if (request.getAttribute("error") != null) { %>
         <div class="alert error"><%= request.getAttribute("error") %></div>

@@ -115,7 +115,7 @@ public class AddPrisonerController extends HttpServlet {
 
 			Prisoner saved = prisonerService.save(prisoner);
 
-			request.setAttribute("successMsg", "Prisoner saved in test mode with ID " + saved.getPrisonerId() + ".");
+			request.setAttribute("successMsg", "Prisoner saved successfully with ID " + saved.getPrisonerId() + ".");
 			request.setAttribute("role", role);
 			request.setAttribute("userName", user.getFullName() != null ? user.getFullName() : "User");
 			request.getRequestDispatcher("/WEB-INF/pages/add-prisoner.jsp").forward(request, response);

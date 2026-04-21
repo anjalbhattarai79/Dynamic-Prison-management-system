@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.util.*" %>
 <%@ page import="com.anjal.model.User" %>
+<%@ page import="com.anjal.service.DashboardService.*" %>
 <%-- Security check: only admin can access --%>
 <%-- <%
     if (session.getAttribute("userId") == null || !"ADMIN".equals(session.getAttribute("role"))) {
@@ -22,6 +23,25 @@ if (adminName == null || adminName.trim().isEmpty()) {
     }
 }
 String contextPath = request.getContextPath();
+
+// Get data from request attributes
+Integer totalPrisoners = (Integer) request.getAttribute("totalPrisoners");
+Integer activePrisoners = (Integer) request.getAttribute("activePrisoners");
+Integer totalStaff = (Integer) request.getAttribute("totalStaff");
+Integer totalFamilies = (Integer) request.getAttribute("totalFamilies");
+Integer pendingRequests = (Integer) request.getAttribute("pendingRequests");
+Integer approvedVisits = (Integer) request.getAttribute("approvedVisits");
+
+List<PrisonerSummary> recentPrisoners = (List<PrisonerSummary>) request.getAttribute("recentPrisoners");
+List<VisitRequestSummary> visitRequests = (List<VisitRequestSummary>) request.getAttribute("visitRequests");
+List<ActivitySummary> activities = (List<ActivitySummary>) request.getAttribute("activities");
+
+if (totalPrisoners == null) totalPrisoners = 0;
+if (activePrisoners == null) activePrisoners = 0;
+if (totalStaff == null) totalStaff = 0;
+if (totalFamilies == null) totalFamilies = 0;
+if (pendingRequests == null) pendingRequests = 0;
+if (approvedVisits == null) approvedVisits = 0;
 %>
 
 <!DOCTYPE html>
@@ -156,15 +176,17 @@ String contextPath = request.getContextPath();
         .badge-rejected::before{background:var(--error)}
         .badge-released{background:var(--cloud);color:var(--text-sub);border:1px solid var(--border)}
         .badge-released::before{background:var(--text-light)}
+        .badge-transferred{background:#eef4fd;color:var(--info);border:1px solid #b8d0f0}
+        .badge-transferred::before{background:var(--info)}
         /* ── Activity feed ── */
         .activity-list{display:flex;flex-direction:column}
         .activity-item{display:flex;align-items:flex-start;gap:12px;padding:14px 20px;border-bottom:1px solid var(--border-light)}
         .activity-item:last-child{border-bottom:none}
         .activity-dot{width:8px;height:8px;border-radius:50%;margin-top:4px;flex-shrink:0}
-        .activity-dot.add{background:#1e7d5a}
-        .activity-dot.update{background:var(--blue-acc)}
+        .activity-dot.add, .activity-dot.LOGIN_SUCCESS{background:#1e7d5a}
+        .activity-dot.update, .activity-dot.VISIT_REQUEST_APPROVED{background:var(--blue-acc)}
         .activity-dot.delete{background:var(--error)}
-        .activity-dot.visit{background:#b07d10}
+        .activity-dot.visit, .activity-dot.INQUIRY_SUBMITTED{background:#b07d10}
         .activity-dot.login{background:#6c47d5}
         .activity-body p{font-size:13px;color:var(--text-main);line-height:1.4}
         .activity-body span{font-size:11.5px;color:var(--text-light)}
@@ -246,7 +268,7 @@ String contextPath = request.getContextPath();
             <a href="visit-requests.jsp" class="nav-item">
                 <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                 Visit Requests
-                <span class="nav-badge" id="pendingBadge">0</span>
+                <span class="nav-badge" id="pendingBadge"><%= pendingRequests %></span>
             </a>
             <a href="activity-tracking.jsp" class="nav-item">
                 <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
@@ -333,7 +355,7 @@ String contextPath = request.getContextPath();
                         </div>
                         <span class="stat-change neutral">Total</span>
                     </div>
-                    <div class="stat-value" id="statTotalPrisoners">—</div>
+                    <div class="stat-value"><%= totalPrisoners %></div>
                     <div class="stat-label">Total Prisoners</div>
                 </div>
                 <div class="stat-card">
@@ -343,7 +365,7 @@ String contextPath = request.getContextPath();
                         </div>
                         <span class="stat-change up">Active</span>
                     </div>
-                    <div class="stat-value" id="statActivePrisoners">—</div>
+                    <div class="stat-value"><%= activePrisoners %></div>
                     <div class="stat-label">Active Prisoners</div>
                 </div>
                 <div class="stat-card">
@@ -351,9 +373,9 @@ String contextPath = request.getContextPath();
                         <div class="stat-icon warn">
                             <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                         </div>
-                        <span class="stat-change neutral" id="statPendingChange">Pending</span>
+                        <span class="stat-change neutral">Pending</span>
                     </div>
-                    <div class="stat-value" id="statPendingVisits">—</div>
+                    <div class="stat-value"><%= pendingRequests %></div>
                     <div class="stat-label">Pending Visit Requests</div>
                 </div>
                 <div class="stat-card">
@@ -363,7 +385,7 @@ String contextPath = request.getContextPath();
                         </div>
                         <span class="stat-change up">This month</span>
                     </div>
-                    <div class="stat-value" id="statApprovedVisits">—</div>
+                    <div class="stat-value"><%= approvedVisits %></div>
                     <div class="stat-label">Approved Visits</div>
                 </div>
                 <div class="stat-card">
@@ -373,7 +395,7 @@ String contextPath = request.getContextPath();
                         </div>
                         <span class="stat-change neutral">Staff</span>
                     </div>
-                    <div class="stat-value" id="statStaff">—</div>
+                    <div class="stat-value"><%= totalStaff %></div>
                     <div class="stat-label">Total Staff</div>
                 </div>
                 <div class="stat-card">
@@ -383,7 +405,7 @@ String contextPath = request.getContextPath();
                         </div>
                         <span class="stat-change neutral">Registered</span>
                     </div>
-                    <div class="stat-value" id="statFamilies">—</div>
+                    <div class="stat-value"><%= totalFamilies %></div>
                     <div class="stat-label">Family Accounts</div>
                 </div>
             </div>
@@ -408,9 +430,27 @@ String contextPath = request.getContextPath();
                                     <th>Status</th>
                                 </tr>
                             </thead>
-                            <tbody id="recentPrisonersTable">
-                                <%-- Populated via servlet or JSTL forEach --%>
-                                <tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-light)">Loading...</td></tr>
+                            <tbody>
+                                <%
+                                    if (recentPrisoners == null || recentPrisoners.isEmpty()) {
+                                %>
+                                <tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-light)">No prisoners found</td></tr>
+                                <%
+                                    } else {
+                                        for (PrisonerSummary p : recentPrisoners) {
+                                %>
+                                <tr>
+                                    <td><a href="#"><%= p.getPrisonerId() %></a></td>
+                                    <td><%= p.getFullName() %></td>
+                                    <td><%= p.getCrimeType() %></td>
+                                    <td>Block <%= p.getBlockNumber() %></td>
+                                    <td><span class="sec-<%= p.getSecurityLevel().toLowerCase() %>"><%= p.getSecurityLevel() %></span></td>
+                                    <td><span class="badge badge-<%= p.getStatus().toLowerCase() %>"><%= p.getStatus() %></span></td>
+                                </tr>
+                                <%
+                                        }
+                                    }
+                                %>
                             </tbody>
                         </table>
                     </div>
@@ -432,8 +472,27 @@ String contextPath = request.getContextPath();
                                     <th>Action</th>
                                 </tr>
                             </thead>
-                            <tbody id="visitRequestsTable">
-                                <tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-light)">Loading...</td></tr>
+                            <tbody>
+                                <%
+                                    if (visitRequests == null || visitRequests.isEmpty()) {
+                                %>
+                                <tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-light)">No pending requests</td></tr>
+                                <%
+                                    } else {
+                                        for (VisitRequestSummary v : visitRequests) {
+                                %>
+                                <tr>
+                                    <td>#<%= v.getRequestId() %></td>
+                                    <td><%= v.getVisitorName() %></td>
+                                    <td><%= v.getPrisonerName() %></td>
+                                    <td><%= v.getPreferredDate() %></td>
+                                    <td><span class="badge badge-pending">Pending</span></td>
+                                    <td><a href="#">Review</a></td>
+                                </tr>
+                                <%
+                                        }
+                                    }
+                                %>
                             </tbody>
                         </table>
                     </div>
@@ -479,7 +538,25 @@ String contextPath = request.getContextPath();
                             <a href="reports.jsp">View logs →</a>
                         </div>
                         <div class="activity-list" id="activityFeed">
-                            <div style="padding:24px;text-align:center;color:var(--text-light);font-size:13px">Loading activity...</div>
+                            <%
+                                if (activities == null || activities.isEmpty()) {
+                            %>
+                            <div style="padding:20px;text-align:center;color:var(--text-light);font-size:13px">No recent activity</div>
+                            <%
+                                } else {
+                                    for (ActivitySummary a : activities) {
+                            %>
+                            <div class="activity-item">
+                                <div class="activity-dot <%= a.getType() %>"></div>
+                                <div class="activity-body">
+                                    <p><%= a.getDescription() %></p>
+                                    <span><%= a.getTimeAgo() %> · <%= a.getPerformedBy() %></span>
+                                </div>
+                            </div>
+                            <%
+                                    }
+                                }
+                            %>
                         </div>
                     </div>
                 </div>
@@ -507,112 +584,6 @@ String contextPath = request.getContextPath();
         document.getElementById('sidebar').classList.remove('open');
         document.getElementById('overlay').classList.remove('show');
     }
-
-    /* Load dashboard stats via AJAX */
-    function loadStats() {
-        fetch('<%= contextPath %>/api/admin/dashboard/stats')
-            .then(r => r.json())
-            .then(data => {
-                document.getElementById('statTotalPrisoners').textContent = data.totalPrisoners ?? '—';
-                document.getElementById('statActivePrisoners').textContent = data.activePrisoners ?? '—';
-                document.getElementById('statPendingVisits').textContent = data.pendingVisits ?? '—';
-                document.getElementById('statApprovedVisits').textContent = data.approvedVisits ?? '—';
-                document.getElementById('statStaff').textContent = data.totalStaff ?? '—';
-                document.getElementById('statFamilies').textContent = data.totalFamilies ?? '—';
-                if (data.pendingVisits > 0) {
-                    document.getElementById('pendingBadge').textContent = data.pendingVisits;
-                }
-            })
-            .catch(() => {
-                /* Silently fail — servlet may not be available in design preview */
-            });
-    }
-
-    /* Load recent prisoners */
-    function loadRecentPrisoners() {
-        fetch('<%= contextPath %>/api/admin/dashboard/prisoners?limit=5')
-            .then(r => r.json())
-            .then(data => {
-                const tbody = document.getElementById('recentPrisonersTable');
-                if (!data || data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-light)">No prisoners found</td></tr>';
-                    return;
-                }
-                tbody.innerHTML = data.map(p => `
-                    <tr>
-                        <td><a href="#">${p.prisonerId}</a></td>
-                        <td>${p.fullName}</td>
-                        <td>${p.crimeType}</td>
-                        <td>Block ${p.blockNumber}</td>
-                        <td><span class="sec-${p.securityLevel.toLowerCase()}">${p.securityLevel}</span></td>
-                        <td><span class="badge badge-${p.status.toLowerCase()}">${p.status}</span></td>
-                    </tr>
-                `).join('');
-            })
-            .catch(() => {
-                document.getElementById('recentPrisonersTable').innerHTML =
-                    '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-light)">Unable to load data</td></tr>';
-            });
-    }
-
-    /* Load pending visit requests */
-    function loadPendingVisits() {
-        fetch('<%= contextPath %>/api/admin/dashboard/visits?limit=4')
-            .then(r => r.json())
-            .then(data => {
-                const tbody = document.getElementById('visitRequestsTable');
-                if (!data || data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-light)">No pending requests</td></tr>';
-                    return;
-                }
-                tbody.innerHTML = data.map(v => `
-                    <tr>
-                        <td>#${v.requestId}</td>
-                        <td>${v.visitorName}</td>
-                        <td>${v.prisonerName}</td>
-                        <td>${v.preferredDate}</td>
-                        <td><span class="badge badge-pending">Pending</span></td>
-                        <td><a href="#">Review</a></td>
-                    </tr>
-                `).join('');
-            })
-            .catch(() => {
-                document.getElementById('visitRequestsTable').innerHTML =
-                    '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-light)">Unable to load data</td></tr>';
-            });
-    }
-
-    /* Load activity feed */
-    function loadActivity() {
-        fetch('<%= contextPath %>/api/admin/dashboard/activity?limit=6')
-            .then(r => r.json())
-            .then(data => {
-                const feed = document.getElementById('activityFeed');
-                if (!data || data.length === 0) {
-                    feed.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-light);font-size:13px">No recent activity</div>';
-                    return;
-                }
-                feed.innerHTML = data.map(a => `
-                    <div class="activity-item">
-                        <div class="activity-dot ${a.type}"></div>
-                        <div class="activity-body">
-                            <p>${a.description}</p>
-                            <span>${a.timeAgo} · ${a.performedBy}</span>
-                        </div>
-                    </div>
-                `).join('');
-            })
-            .catch(() => {
-                document.getElementById('activityFeed').innerHTML =
-                    '<div style="padding:20px;text-align:center;color:var(--text-light);font-size:13px">Unable to load activity</div>';
-            });
-    }
-
-    /* Init */
-    loadStats();
-    loadRecentPrisoners();
-    loadPendingVisits();
-    loadActivity();
 </script>
 </body>
 </html>

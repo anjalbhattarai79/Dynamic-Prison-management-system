@@ -55,6 +55,7 @@ public class AuthService {
 			result.setMessage("Login successful.");
 			return result;
 		} catch (SQLException e) {
+			e.printStackTrace();
 			result.setSuccess(false);
 			result.setMessage("Database error while authenticating. Please try again later.");
 			return result;
@@ -63,22 +64,98 @@ public class AuthService {
 
 	public RegistrationResult registerFamily(String fullName, String email, String password, String confirmPassword) {
 		RegistrationResult result = new RegistrationResult();
-		result.setSuccess(false);
-		result.setMessage("Registration is disabled in the current admin-only test mode.");
+
+		if (!ValidationUtil.isValidFullName(fullName) || !ValidationUtil.isValidEmail(email)
+				|| !ValidationUtil.isNotEmpty(password)) {
+			result.setSuccess(false);
+			result.setMessage("Please provide all fields correctly.");
+			return result;
+		}
+
+		if (!password.equals(confirmPassword)) {
+			result.setSuccess(false);
+			result.setMessage("Passwords do not match.");
+			return result;
+		}
+
+		try {
+			if (userDAO.emailExists(email)) {
+				result.setSuccess(false);
+				result.setMessage("Email is already registered.");
+				return result;
+			}
+
+			String salt = PasswordUtil.generateSalt();
+			String hash = PasswordUtil.hashPassword(password, salt);
+
+			User newUser = userDAO.createFamilyUser(fullName, email, hash, salt);
+			if (newUser != null) {
+				result.setSuccess(true);
+				result.setUser(newUser);
+				result.setMessage("Registration successful.");
+			} else {
+				result.setSuccess(false);
+				result.setMessage("Error creating account.");
+			}
+		} catch (SQLException e) {
+			result.setSuccess(false);
+			result.setMessage("Database error during registration.");
+		}
 		return result;
 	}
 
 	public PasswordResetInitResult initiatePasswordReset(String email) {
 		PasswordResetInitResult result = new PasswordResetInitResult();
-		result.setSuccess(false);
-		result.setMessage("Password reset is disabled until MySQL is enabled.");
+		if (!ValidationUtil.isValidEmail(email)) {
+			result.setSuccess(false);
+			result.setMessage("Invalid email format.");
+			return result;
+		}
+
+		try {
+			String token = userDAO.createPasswordResetToken(email);
+			if (token != null) {
+				result.setSuccess(true);
+				result.setToken(token);
+				result.setMessage("If this email exists, a reset token has been generated.");
+			} else {
+				result.setSuccess(false);
+				result.setMessage("If this email exists, a reset token has been generated.");
+			}
+		} catch (SQLException e) {
+			result.setSuccess(false);
+			result.setMessage("Database error while initiating reset.");
+		}
 		return result;
 	}
 
 	public BasicResult resetPassword(String email, String token, String newPassword, String confirmPassword) {
 		BasicResult result = new BasicResult();
-		result.setSuccess(false);
-		result.setMessage("Password reset is disabled until MySQL is enabled.");
+
+		if (!newPassword.equals(confirmPassword)) {
+			result.setSuccess(false);
+			result.setMessage("Passwords do not match.");
+			return result;
+		}
+
+		try {
+			User user = userDAO.findByEmailAndValidToken(email, token);
+			if (user == null) {
+				result.setSuccess(false);
+				result.setMessage("Invalid or expired reset token.");
+				return result;
+			}
+
+			String salt = PasswordUtil.generateSalt();
+			String hash = PasswordUtil.hashPassword(newPassword, salt);
+			userDAO.updatePassword(user.getId(), hash, salt);
+
+			result.setSuccess(true);
+			result.setMessage("Password has been successfully updated.");
+		} catch (SQLException e) {
+			result.setSuccess(false);
+			result.setMessage("Database error during password reset.");
+		}
 		return result;
 	}
 

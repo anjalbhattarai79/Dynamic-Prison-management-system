@@ -16,26 +16,22 @@ import jakarta.servlet.http.HttpServletResponse;
  */
 @WebServlet("/forgot-password")
 public class ForgotPasswordController extends HttpServlet {
-    private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
 
-    private final AuthService authService = new AuthService();
+	private final AuthService authService = new AuthService();
 
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        request.getRequestDispatcher("/WEB-INF/pages/forgot-password.jsp").forward(request, response);
-    }
+	@Override
+	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		request.getRequestDispatcher("/WEB-INF/pages/forgot-password.jsp").forward(request, response);
+	}
 
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        String email = request.getParameter("email");
-        PasswordResetInitResult result = authService.initiatePasswordReset(email);
-        request.setAttribute(result.isSuccess() ? "message" : "error", result.getMessage());
-        // For academic demo purposes, show the token so the student can test the flow.
-        if (result.isSuccess()) {
-            request.setAttribute("token", result.getToken());
-        }
-        request.getRequestDispatcher("/WEB-INF/pages/forgot-password.jsp").forward(request, response);
-    }
+	@Override
+	protected void doPost(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		String email = request.getParameter("email");
+		PasswordResetInitResult result = authService.initiatePasswordReset(email);
+		request.setAttribute(result.isSuccess() ? "successMsg" : "errorMsg", result.getMessage());
+		request.getRequestDispatcher("/WEB-INF/pages/forgot-password.jsp").forward(request, response);
+	}
 }

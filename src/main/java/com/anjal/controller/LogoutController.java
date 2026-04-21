@@ -20,7 +20,7 @@ public class LogoutController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        SessionUtil.invalidateSession(request);
+        SessionUtil.invalidateSession(request.getSession(false));
         response.sendRedirect(request.getContextPath() + "/login?message=loggedout");
     }
 

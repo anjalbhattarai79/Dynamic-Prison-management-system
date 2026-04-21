@@ -18,9 +18,14 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(100) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     password_salt VARCHAR(255) NOT NULL,
+    reset_token VARCHAR(100) NULL,
+    reset_token_expiry DATETIME NULL,
     is_locked TINYINT(1) NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY idx_users_role_id (role_id),
+    KEY idx_users_reset_token (reset_token),
+    KEY idx_users_reset_token_expiry (reset_token_expiry),
     FOREIGN KEY (role_id) REFERENCES roles(id)
 );
 
@@ -39,7 +44,12 @@ CREATE TABLE IF NOT EXISTS prisoners (
     security_level VARCHAR(50) NOT NULL,
     status VARCHAR(50) NOT NULL,
     emergency_contact VARCHAR(100),
-    is_deleted TINYINT(1) NOT NULL DEFAULT 0
+    photo_data_uri LONGTEXT,
+    is_deleted TINYINT(1) NOT NULL DEFAULT 0,
+    KEY idx_prisoners_status (status),
+    KEY idx_prisoners_block_number (block_number),
+    KEY idx_prisoners_security_level (security_level),
+    KEY idx_prisoners_is_deleted (is_deleted)
 );
 
 -- 4. family_members
@@ -50,6 +60,8 @@ CREATE TABLE IF NOT EXISTS family_members (
     relation VARCHAR(50),
     phone VARCHAR(30),
     address VARCHAR(255),
+    KEY idx_family_members_user_id (user_id),
+    KEY idx_family_members_prisoner_id (prisoner_id),
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (prisoner_id) REFERENCES prisoners(id)
 );
@@ -65,6 +77,10 @@ CREATE TABLE IF NOT EXISTS visit_requests (
     message TEXT,
     status VARCHAR(20) NOT NULL DEFAULT 'PENDING', -- PENDING, APPROVED, REJECTED
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_visit_requests_prisoner_id (prisoner_id),
+    KEY idx_visit_requests_family_member_id (family_member_id),
+    KEY idx_visit_requests_status (status),
+    KEY idx_visit_requests_preferred_visit_date (preferred_visit_date),
     FOREIGN KEY (prisoner_id) REFERENCES prisoners(id),
     FOREIGN KEY (family_member_id) REFERENCES family_members(id)
 );
@@ -77,6 +93,8 @@ CREATE TABLE IF NOT EXISTS visit_schedule (
     scheduled_time TIME NOT NULL,
     room VARCHAR(50),
     notes VARCHAR(255),
+    KEY idx_visit_schedule_visit_request_id (visit_request_id),
+    KEY idx_visit_schedule_scheduled_date (scheduled_date),
     FOREIGN KEY (visit_request_id) REFERENCES visit_requests(id)
 );
 
@@ -88,6 +106,8 @@ CREATE TABLE IF NOT EXISTS prisoner_activities (
     activity_name VARCHAR(100) NOT NULL,
     description TEXT,
     activity_date DATE NOT NULL,
+    KEY idx_prisoner_activities_prisoner_id (prisoner_id),
+    KEY idx_prisoner_activities_activity_date (activity_date),
     FOREIGN KEY (prisoner_id) REFERENCES prisoners(id),
     FOREIGN KEY (staff_user_id) REFERENCES users(id)
 );
@@ -99,6 +119,8 @@ CREATE TABLE IF NOT EXISTS deleted_prisoners (
     deleted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted_by INT,
     reason VARCHAR(255),
+    KEY idx_deleted_prisoners_prisoner_id (prisoner_id),
+    KEY idx_deleted_prisoners_deleted_at (deleted_at),
     FOREIGN KEY (prisoner_id) REFERENCES prisoners(id),
     FOREIGN KEY (deleted_by) REFERENCES users(id)
 );
@@ -111,6 +133,9 @@ CREATE TABLE IF NOT EXISTS login_attempts (
     attempt_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     success TINYINT(1) NOT NULL,
     ip_address VARCHAR(50),
+    KEY idx_login_attempts_user_id (user_id),
+    KEY idx_login_attempts_email (email),
+    KEY idx_login_attempts_attempt_time (attempt_time),
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
@@ -122,6 +147,9 @@ CREATE TABLE IF NOT EXISTS notifications (
     message TEXT NOT NULL,
     is_read TINYINT(1) NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_notifications_user_id (user_id),
+    KEY idx_notifications_is_read (is_read),
+    KEY idx_notifications_created_at (created_at),
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
@@ -134,6 +162,8 @@ CREATE TABLE IF NOT EXISTS inquiries (
     response TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     responded_at TIMESTAMP NULL,
+    KEY idx_inquiries_family_member_id (family_member_id),
+    KEY idx_inquiries_created_at (created_at),
     FOREIGN KEY (family_member_id) REFERENCES family_members(id)
 );
 
@@ -144,6 +174,8 @@ CREATE TABLE IF NOT EXISTS activity_logs (
     action VARCHAR(100) NOT NULL,
     details TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_activity_logs_user_id (user_id),
+    KEY idx_activity_logs_created_at (created_at),
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
@@ -155,7 +187,20 @@ INSERT INTO roles (name) VALUES
 ON DUPLICATE KEY UPDATE name = VALUES(name);
 
 -- Sample admin user (password hash placeholder to be updated after PasswordUtil decision)
--- For now, insert a dummy row; you will update password_hash and salt via Java utility.
+-- Default admin login credentials for development:
+-- email: admin@example.com
+-- password: Admin@123
 INSERT INTO users (role_id, full_name, email, password_hash, password_salt, is_locked)
-VALUES (1, 'Admin User', 'admin@example.com', 'CHANGE_ME_HASH', 'CHANGE_ME_SALT', 0)
-ON DUPLICATE KEY UPDATE email = email;
+VALUES (
+    1,
+    'Admin User',
+    'admin@example.com',
+    'Tfe/rHa36aztUKCRkQUO+1xQO0iSghHToAlNQrGeHX4=',
+    'QWRtaW5TYWx0MjAyNg==',
+    0
+)
+ON DUPLICATE KEY UPDATE
+    full_name = VALUES(full_name),
+    password_hash = VALUES(password_hash),
+    password_salt = VALUES(password_salt),
+    is_locked = 0;

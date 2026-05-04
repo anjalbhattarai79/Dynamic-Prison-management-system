@@ -259,13 +259,13 @@ if (approvedVisits == null) approvedVisits = 0;
                 <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                 Staff
             </a>
-            <a href="family-management.jsp" class="nav-item">
+            <a href="<%= contextPath %>/family-list" class="nav-item">
                 <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                 Family Members
             </a>
 
             <p class="nav-section-label" style="margin-top:8px">Operations</p>
-            <a href="visit-requests.jsp" class="nav-item">
+            <a href="<%= contextPath %>/admin/visit-management" class="nav-item">
                 <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                 Visit Requests
                 <span class="nav-badge" id="pendingBadge"><%= pendingRequests %></span>
@@ -390,16 +390,6 @@ if (approvedVisits == null) approvedVisits = 0;
                 </div>
                 <div class="stat-card">
                     <div class="stat-top">
-                        <div class="stat-icon purple">
-                            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                        </div>
-                        <span class="stat-change neutral">Staff</span>
-                    </div>
-                    <div class="stat-value"><%= totalStaff %></div>
-                    <div class="stat-label">Total Staff</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-top">
                         <div class="stat-icon navy">
                             <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                         </div>
@@ -459,7 +449,7 @@ if (approvedVisits == null) approvedVisits = 0;
                     <div class="card">
                         <div class="card-header">
                             <h3>Pending Visit Requests</h3>
-                            <a href="visit-requests.jsp">Manage all →</a>
+                            <a href="<%= contextPath %>/admin/visit-management">Manage all →</a>
                         </div>
                         <table class="data-table">
                             <thead>
@@ -487,7 +477,7 @@ if (approvedVisits == null) approvedVisits = 0;
                                     <td><%= v.getPrisonerName() %></td>
                                     <td><%= v.getPreferredDate() %></td>
                                     <td><span class="badge badge-pending">Pending</span></td>
-                                    <td><a href="#">Review</a></td>
+                                    <td><a href="<%= contextPath %>/admin/visit-management">Review</a></td>
                                 </tr>
                                 <%
                                         }
@@ -512,7 +502,7 @@ if (approvedVisits == null) approvedVisits = 0;
                                 <div class="quick-btn-icon green"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg></div>
                                 Add Staff
                             </a>
-                            <a href="visit-requests.jsp?filter=pending" class="quick-btn">
+                            <a href="<%= contextPath %>/admin/visit-management" class="quick-btn">
                                 <div class="quick-btn-icon warn"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
                                 Review Visits
                             </a>

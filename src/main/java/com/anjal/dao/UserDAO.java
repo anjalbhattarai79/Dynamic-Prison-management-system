@@ -35,6 +35,25 @@ public class UserDAO {
         return null;
     }
 
+    public User findFamilyByPrisonerId(String prisonerId) throws SQLException {
+        String sql = "SELECT u.id, u.role_id, r.name AS role_name, u.full_name, u.email, u.password_hash, u.password_salt, u.is_locked, u.created_at, u.updated_at, u.reset_token, u.reset_token_expiry "
+                   + "FROM users u "
+                   + "JOIN roles r ON u.role_id = r.id "
+                   + "JOIN family_members fm ON fm.user_id = u.id "
+                   + "JOIN prisoners p ON fm.prisoner_id = p.id "
+                   + "WHERE p.prisoner_id = ? AND r.name = 'FAMILY'";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, prisonerId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapRowToUser(rs);
+                }
+            }
+        }
+        return null;
+    }
+
     public boolean emailExists(String email) throws SQLException {
         String sql = "SELECT 1 FROM users WHERE email = ?";
         try (Connection conn = DBConnection.getConnection();
@@ -141,14 +160,57 @@ public class UserDAO {
         }
     }
 
-    public void updatePassword(int userId, String passwordHash, String salt) throws SQLException {
-        String sql = "UPDATE users SET password_hash = ?, password_salt = ?, reset_token = NULL, reset_token_expiry = NULL WHERE id = ?";
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, passwordHash);
-            ps.setString(2, salt);
-            ps.setInt(3, userId);
-            ps.executeUpdate();
+    public void unlockAccount(int userId, String email) throws SQLException {
+        String sqlUpdate = "UPDATE users SET is_locked = 0 WHERE id = ?";
+        String sqlDeleteAttempts = "DELETE FROM login_attempts WHERE user_id = ? OR email = ?";
+        
+        try (Connection conn = DBConnection.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                try (PreparedStatement ps1 = conn.prepareStatement(sqlUpdate)) {
+                    ps1.setInt(1, userId);
+                    ps1.executeUpdate();
+                }
+                try (PreparedStatement ps2 = conn.prepareStatement(sqlDeleteAttempts)) {
+                    ps2.setInt(1, userId);
+                    ps2.setString(2, email);
+                    ps2.executeUpdate();
+                }
+                conn.commit();
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        }
+    }
+
+    public void updatePassword(int userId, String email, String passwordHash, String salt) throws SQLException {
+        String sql = "UPDATE users SET password_hash = ?, password_salt = ?, reset_token = NULL, reset_token_expiry = NULL, is_locked = 0 WHERE id = ?";
+        try (Connection conn = DBConnection.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                    ps.setString(1, passwordHash);
+                    ps.setString(2, salt);
+                    ps.setInt(3, userId);
+                    ps.executeUpdate();
+                }
+                // Also clear login attempts when password is reset
+                String sqlDeleteAttempts = "DELETE FROM login_attempts WHERE user_id = ? OR email = ?";
+                try (PreparedStatement ps2 = conn.prepareStatement(sqlDeleteAttempts)) {
+                    ps2.setInt(1, userId);
+                    ps2.setString(2, email);
+                    ps2.executeUpdate();
+                }
+                conn.commit();
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
+            }
         }
     }
 
@@ -171,16 +233,36 @@ public class UserDAO {
     }
 
     public User findByEmailAndValidToken(String email, String token) throws SQLException {
+        String trimmedToken = token != null ? token.trim() : "";
+        System.out.println("DEBUG: Looking for token for email: " + email);
+        System.out.println("DEBUG: Provided Token: [" + trimmedToken + "]");
+        
         String sql = "SELECT u.id, u.role_id, r.name AS role_name, u.full_name, u.email, u.password_hash, u.password_salt, u.is_locked, u.created_at, u.updated_at, u.reset_token, u.reset_token_expiry "
                    + "FROM users u JOIN roles r ON u.role_id = r.id "
-                   + "WHERE u.email = ? AND u.reset_token = ? AND u.reset_token_expiry IS NOT NULL AND u.reset_token_expiry > NOW()";
+                   + "WHERE u.email = ?";
+                   
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, email);
-            ps.setString(2, token);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return mapRowToUser(rs);
+                    String dbToken = rs.getString("reset_token");
+                    Timestamp dbExpiry = rs.getTimestamp("reset_token_expiry");
+                    
+                    System.out.println("DEBUG: DB Stored Token: [" + dbToken + "]");
+                    System.out.println("DEBUG: DB Stored Expiry: " + dbExpiry);
+                    
+                    if (dbToken != null && dbToken.equals(trimmedToken)) {
+                        if (dbExpiry != null && dbExpiry.after(new Timestamp(System.currentTimeMillis()))) {
+                            return mapRowToUser(rs);
+                        } else {
+                            System.out.println("DEBUG: Token EXPIRED. DB Time: " + dbExpiry + " vs Current Time: " + new Timestamp(System.currentTimeMillis()));
+                        }
+                    } else {
+                        System.out.println("DEBUG: Token MISMATCH.");
+                    }
+                } else {
+                    System.out.println("DEBUG: User not found for email reset.");
                 }
             }
         }

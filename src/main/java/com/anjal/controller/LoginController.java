@@ -48,7 +48,7 @@ public class LoginController extends HttpServlet {
 		}
 
 		// 2. Authenticate Credentials
-		AuthResult result = authService.authenticate(email, password, ipAddress);
+		AuthResult result = authService.authenticate(email, password, ipAddress, loginType);
 		if (!result.isSuccess()) {
 			returnWithError(request, response, result.getMessage(), email, loginType);
 			return;
@@ -66,6 +66,24 @@ public class LoginController extends HttpServlet {
 
 		// 4. Success - Establish Session
 		SessionUtil.setLoggedInUser(request.getSession(true), authUser);
+
+		// Auto-link logic for Family users using Prisoner ID as email
+		if ("FAMILY".equalsIgnoreCase(authUser.getRole().getName())) {
+			com.anjal.dao.FamilyDAO familyDAO = new com.anjal.dao.FamilyDAO();
+			try {
+				com.anjal.model.FamilyMember existing = familyDAO.getFamilyMemberByUserId(authUser.getId());
+				if (existing == null) {
+					com.anjal.dao.PrisonerDAO prisonerDAO = new com.anjal.dao.PrisonerDAO();
+					com.anjal.model.Prisoner p = prisonerDAO.findByPrisonerId(authUser.getEmail());
+					if (p != null) {
+						familyDAO.createDefaultFamilyMember(authUser.getId(), p.getId(), "Family");
+					}
+				}
+			} catch (java.sql.SQLException e) {
+				e.printStackTrace();
+			}
+		}
+
 		response.sendRedirect(request.getContextPath() + resolveDashboardByRole(authUser));
 	}
 

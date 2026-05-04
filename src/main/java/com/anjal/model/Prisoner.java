@@ -17,6 +17,8 @@ public class Prisoner {
 	private String status;
 	private String emergencyContact;
 	private String photoDataUri;
+	private String healthStatus;
+	private String medicalNotes;
 	private boolean deleted;
 
 	public int getId() {
@@ -129,6 +131,22 @@ public class Prisoner {
 
 	public void setPhotoDataUri(String photoDataUri) {
 		this.photoDataUri = photoDataUri;
+	}
+
+	public String getHealthStatus() {
+		return healthStatus;
+	}
+
+	public void setHealthStatus(String healthStatus) {
+		this.healthStatus = healthStatus;
+	}
+
+	public String getMedicalNotes() {
+		return medicalNotes;
+	}
+
+	public void setMedicalNotes(String medicalNotes) {
+		this.medicalNotes = medicalNotes;
 	}
 
 	public boolean isDeleted() {

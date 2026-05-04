@@ -23,6 +23,62 @@ public class DBConnection {
     }
 
     public static Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(URL, USER, PASSWORD);
+        Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+        initializeDatabase(conn);
+        return conn;
+    }
+
+    private static boolean initialized = false;
+    private static void initializeDatabase(Connection conn) {
+        if (initialized) return;
+        synchronized (DBConnection.class) {
+            if (initialized) return;
+            System.out.println("DEBUG: Starting database self-healing initialization...");
+            try (java.sql.Statement stmt = conn.createStatement()) {
+                
+                // Aggressive check for activity_logs
+                boolean tableOk = false;
+                try {
+                    stmt.executeQuery("SELECT 1 FROM activity_logs LIMIT 1").close();
+                    tableOk = true;
+                } catch (SQLException e) {
+                    System.out.println("DEBUG: activity_logs table inaccessible or missing. Attempting force fix...");
+                }
+
+                if (!tableOk) {
+                    stmt.execute("DROP TABLE IF EXISTS activity_logs");
+                    stmt.execute("CREATE TABLE activity_logs (" +
+                                "id INT AUTO_INCREMENT PRIMARY KEY, " +
+                                "user_id INT, " +
+                                "action VARCHAR(255) NOT NULL, " +
+                                "details TEXT, " +
+                                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
+                    System.out.println("DEBUG: Force-recreated activity_logs table.");
+                }
+
+                // Standard check for others
+                stmt.execute("CREATE TABLE IF NOT EXISTS notifications (" +
+                            "id INT AUTO_INCREMENT PRIMARY KEY, " +
+                            "user_id INT NOT NULL, " +
+                            "title VARCHAR(255), " +
+                            "message TEXT, " +
+                            "is_read BOOLEAN DEFAULT FALSE, " +
+                            "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
+
+                stmt.execute("CREATE TABLE IF NOT EXISTS login_attempts (" +
+                            "id INT AUTO_INCREMENT PRIMARY KEY, " +
+                            "user_id INT, " +
+                            "email VARCHAR(255), " +
+                            "success BOOLEAN, " +
+                            "ip_address VARCHAR(45), " +
+                            "attempt_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
+                
+                initialized = true;
+                System.out.println("DEBUG: Database initialization completed successfully.");
+            } catch (SQLException e) {
+                System.err.println("CRITICAL: Database auto-initialization failed!");
+                e.printStackTrace();
+            }
+        }
     }
 }

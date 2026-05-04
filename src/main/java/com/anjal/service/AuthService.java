@@ -14,23 +14,46 @@ public class AuthService {
 
 	private final UserDAO userDAO = new UserDAO();
 
-	public AuthResult authenticate(String email, String password, String ipAddress) {
+	public AuthResult authenticate(String identifier, String password, String ipAddress, String loginType) {
 		AuthResult result = new AuthResult();
 
-		String normalizedEmail = email == null ? "" : email.trim();
+		String normalizedIdentifier = identifier == null ? "" : identifier.trim();
 
-		if (!ValidationUtil.isValidEmail(normalizedEmail) || !ValidationUtil.isNotEmpty(password)) {
-			result.setSuccess(false);
-			result.setMessage("Invalid email or password format.");
-			return result;
+		// 1. Validation Logic
+		if ("FAMILY".equalsIgnoreCase(loginType)) {
+			// No email validation for family (identifier is Prisoner ID)
+			if (!ValidationUtil.isNotEmpty(normalizedIdentifier) || !ValidationUtil.isNotEmpty(password)) {
+				result.setSuccess(false);
+				result.setMessage("Prisoner ID and password are required.");
+				return result;
+			}
+		} else {
+			// Standard Email validation for ADMIN/STAFF
+			if (!ValidationUtil.isValidEmail(normalizedIdentifier) || !ValidationUtil.isNotEmpty(password)) {
+				result.setSuccess(false);
+				result.setMessage("Invalid email or password format.");
+				return result;
+			}
 		}
 
 		try {
-			User user = userDAO.findByEmail(normalizedEmail);
+			User user;
+			if ("FAMILY".equalsIgnoreCase(loginType)) {
+				user = userDAO.findFamilyByPrisonerId(normalizedIdentifier);
+				
+				// Fallback: If prisoner link is broken but user record exists with this ID as email,
+				// allow login so the Controller's auto-link logic can repair the link.
+				if (user == null) {
+					user = userDAO.findByEmail(normalizedIdentifier);
+				}
+			} else {
+				user = userDAO.findByEmail(normalizedIdentifier);
+			}
+
 			if (user == null) {
-				userDAO.recordLoginAttempt(null, normalizedEmail, false, ipAddress);
+				userDAO.recordLoginAttempt(null, normalizedIdentifier, false, ipAddress);
 				result.setSuccess(false);
-				result.setMessage("Invalid credentials.");
+				result.setMessage("Account not found for the provided " + ("FAMILY".equalsIgnoreCase(loginType) ? "Prisoner ID." : "email."));
 				return result;
 			}
 
@@ -40,16 +63,27 @@ public class AuthService {
 				return result;
 			}
 
+			// 2. Password Check
 			boolean passwordValid = PasswordUtil.verifyPassword(password, user.getPasswordSalt(), user.getPasswordHash());
+
+			// Fallback: Default password for new family accounts that haven't been updated yet
+			if (!passwordValid && "FAMILY".equalsIgnoreCase(loginType) && "Family@123".equals(password)) {
+				// If updatedAt is null or same as createdAt (within 1 second), consider it "not yet changed"
+				if (user.getUpdatedAt() == null || user.getCreatedAt() == null || 
+					Math.abs(java.time.Duration.between(user.getCreatedAt(), user.getUpdatedAt()).toSeconds()) < 2) {
+					passwordValid = true;
+				}
+			}
+
 			if (!passwordValid) {
-				userDAO.recordLoginAttempt(user.getId(), normalizedEmail, false, ipAddress);
+				userDAO.recordLoginAttempt(user.getId(), normalizedIdentifier, false, ipAddress);
 				userDAO.evaluateAndLockAccountIfNeeded(user);
 				result.setSuccess(false);
-				result.setMessage("Invalid credentials.");
+				result.setMessage("Invalid password.");
 				return result;
 			}
 
-			userDAO.recordLoginAttempt(user.getId(), normalizedEmail, true, ipAddress);
+			userDAO.recordLoginAttempt(user.getId(), normalizedIdentifier, true, ipAddress);
 			result.setSuccess(true);
 			result.setUser(user);
 			result.setMessage("Login successful.");
@@ -104,25 +138,28 @@ public class AuthService {
 		return result;
 	}
 
-	public PasswordResetInitResult initiatePasswordReset(String email) {
+	public PasswordResetInitResult initiatePasswordReset(String identifier) {
 		PasswordResetInitResult result = new PasswordResetInitResult();
-		if (!ValidationUtil.isValidEmail(email)) {
+		String normalized = identifier == null ? "" : identifier.trim();
+		
+		if (normalized.isEmpty()) {
 			result.setSuccess(false);
-			result.setMessage("Invalid email format.");
+			result.setMessage("Please enter your Email or Prisoner ID.");
 			return result;
 		}
 
 		try {
-			String token = userDAO.createPasswordResetToken(email);
+			String token = userDAO.createPasswordResetToken(normalized);
 			if (token != null) {
 				result.setSuccess(true);
 				result.setToken(token);
-				result.setMessage("If this email exists, a reset token has been generated.");
+				result.setMessage("Account found. Your reset token has been generated.");
 			} else {
 				result.setSuccess(false);
-				result.setMessage("If this email exists, a reset token has been generated.");
+				result.setMessage("No account found with that identifier.");
 			}
 		} catch (SQLException e) {
+			e.printStackTrace();
 			result.setSuccess(false);
 			result.setMessage("Database error while initiating reset.");
 		}
@@ -148,7 +185,7 @@ public class AuthService {
 
 			String salt = PasswordUtil.generateSalt();
 			String hash = PasswordUtil.hashPassword(newPassword, salt);
-			userDAO.updatePassword(user.getId(), hash, salt);
+			userDAO.updatePassword(user.getId(), user.getEmail(), hash, salt);
 
 			result.setSuccess(true);
 			result.setMessage("Password has been successfully updated.");

@@ -14,6 +14,7 @@ public class FamilyDashboardService {
         try {
             return familyDAO.getUpcomingVisitsCount(userId);
         } catch (SQLException e) {
+            e.printStackTrace();
             return 0;
         }
     }
@@ -22,6 +23,7 @@ public class FamilyDashboardService {
         try {
             return familyDAO.getPendingRequestsCount(userId);
         } catch (SQLException e) {
+            e.printStackTrace();
             return 0;
         }
     }
@@ -30,6 +32,7 @@ public class FamilyDashboardService {
         try {
             return familyDAO.getApprovedVisitsCount(userId);
         } catch (SQLException e) {
+            e.printStackTrace();
             return 0;
         }
     }
@@ -38,6 +41,7 @@ public class FamilyDashboardService {
         try {
             return familyDAO.getUnreadNotificationsCount(userId);
         } catch (SQLException e) {
+            e.printStackTrace();
             return 0;
         }
     }
@@ -65,6 +69,7 @@ public class FamilyDashboardService {
             }
             return list;
         } catch (SQLException e) {
+            e.printStackTrace();
             return new ArrayList<>();
         }
     }
@@ -72,21 +77,30 @@ public class FamilyDashboardService {
     public List<Prisoner> getLinkedPrisoners(int userId) {
         try {
             List<com.anjal.model.Prisoner> models = familyDAO.getLinkedPrisoners(userId);
+            System.out.println("DEBUG: Found " + models.size() + " linked prisoners for user ID: " + userId);
             List<Prisoner> list = new ArrayList<>();
             for (com.anjal.model.Prisoner m : models) {
                 Prisoner p = new Prisoner();
                 p.setPrisonerId(m.getPrisonerId());
                 p.setFullName(m.getFullName());
-                try {
-                    p.setBlockNumber(Integer.parseInt(m.getBlockNumber()));
-                } catch (NumberFormatException e) {
-                    p.setBlockNumber(0);
-                }
+                p.setGender(m.getGender());
+                p.setCrimeType(m.getCrimeType());
+                p.setAdmissionDate(m.getAdmissionDate() != null ? m.getAdmissionDate().toString() : "-");
+                p.setReleaseDate(m.getReleaseDate() != null ? m.getReleaseDate().toString() : "TBD");
+                p.setDateOfBirth(m.getDateOfBirth() != null ? m.getDateOfBirth().toString() : "-");
+                p.setBlockNumber(m.getBlockNumber());
                 p.setSecurityLevel(m.getSecurityLevel());
+                p.setStatus(m.getStatus());
+                p.setSentenceYears(m.getSentenceYears());
+                p.setHealthStatus(m.getHealthStatus());
+                p.setMedicalNotes(m.getMedicalNotes());
+                p.setPhotoDataUri(m.getPhotoDataUri());
+                p.setEmergencyContact(m.getEmergencyContact());
                 list.add(p);
             }
             return list;
         } catch (SQLException e) {
+            e.printStackTrace();
             return new ArrayList<>();
         }
     }
@@ -100,13 +114,25 @@ public class FamilyDashboardService {
                 n.setNotificationId(m.getId());
                 n.setMessage(m.getMessage());
                 n.setIsRead(m.isRead());
-                n.setTimeAgo(m.getCreatedAt().toString());
+                n.setTimeAgo(formatTimeAgo(m.getCreatedAt()));
                 list.add(n);
             }
             return list;
         } catch (SQLException e) {
+            e.printStackTrace();
             return new ArrayList<>();
         }
+    }
+
+    private String formatTimeAgo(java.time.LocalDateTime dt) {
+        if (dt == null) return "Unknown";
+        java.time.Duration duration = java.time.Duration.between(dt, java.time.LocalDateTime.now());
+        long mins = duration.toMinutes();
+        if (mins < 1) return "Just now";
+        if (mins < 60) return mins + "m ago";
+        long hours = duration.toHours();
+        if (hours < 24) return hours + "h ago";
+        return duration.toDays() + "d ago";
     }
 
     public static class VisitRequest {
@@ -131,17 +157,50 @@ public class FamilyDashboardService {
     public static class Prisoner {
         private String prisonerId;
         private String fullName;
-        private int blockNumber;
+        private String gender;
+        private String crimeType;
+        private String admissionDate;
+        private String releaseDate;
+        private String dateOfBirth;
+        private String blockNumber;
         private String securityLevel;
+        private String status;
+        private int sentenceYears;
+        private String healthStatus;
+        private String medicalNotes;
+        private String photoDataUri;
+        private String emergencyContact;
 
         public String getPrisonerId() { return prisonerId; }
         public void setPrisonerId(String prisonerId) { this.prisonerId = prisonerId; }
         public String getFullName() { return fullName; }
         public void setFullName(String fullName) { this.fullName = fullName; }
-        public int getBlockNumber() { return blockNumber; }
-        public void setBlockNumber(int blockNumber) { this.blockNumber = blockNumber; }
+        public String getGender() { return gender; }
+        public void setGender(String gender) { this.gender = gender; }
+        public String getCrimeType() { return crimeType; }
+        public void setCrimeType(String crimeType) { this.crimeType = crimeType; }
+        public String getAdmissionDate() { return admissionDate; }
+        public void setAdmissionDate(String admissionDate) { this.admissionDate = admissionDate; }
+        public String getReleaseDate() { return releaseDate; }
+        public void setReleaseDate(String releaseDate) { this.releaseDate = releaseDate; }
+        public String getDateOfBirth() { return dateOfBirth; }
+        public void setDateOfBirth(String dateOfBirth) { this.dateOfBirth = dateOfBirth; }
+        public String getBlockNumber() { return blockNumber; }
+        public void setBlockNumber(String blockNumber) { this.blockNumber = blockNumber; }
         public String getSecurityLevel() { return securityLevel; }
         public void setSecurityLevel(String securityLevel) { this.securityLevel = securityLevel; }
+        public String getStatus() { return status; }
+        public void setStatus(String status) { this.status = status; }
+        public int getSentenceYears() { return sentenceYears; }
+        public void setSentenceYears(int sentenceYears) { this.sentenceYears = sentenceYears; }
+        public String getHealthStatus() { return healthStatus; }
+        public void setHealthStatus(String healthStatus) { this.healthStatus = healthStatus; }
+        public String getMedicalNotes() { return medicalNotes; }
+        public void setMedicalNotes(String medicalNotes) { this.medicalNotes = medicalNotes; }
+        public String getPhotoDataUri() { return photoDataUri; }
+        public void setPhotoDataUri(String photoDataUri) { this.photoDataUri = photoDataUri; }
+        public String getEmergencyContact() { return emergencyContact; }
+        public void setEmergencyContact(String emergencyContact) { this.emergencyContact = emergencyContact; }
     }
 
     public static class Notification {

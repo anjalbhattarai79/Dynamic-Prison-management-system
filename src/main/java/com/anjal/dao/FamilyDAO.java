@@ -231,6 +231,26 @@ public class FamilyDAO {
 		return null;
 	}
 
+	public List<FamilyMember> findAllWithVisitStats() throws SQLException {
+		List<FamilyMember> list = new ArrayList<>();
+		String sql = "SELECT fm.*, u.full_name as family_name, u.email as family_email, p.prisoner_id, p.full_name as prisoner_name, "
+				+ "(SELECT COUNT(*) FROM visit_requests WHERE family_member_id = fm.id) as total_visits, "
+				+ "(SELECT COUNT(*) FROM visit_requests WHERE family_member_id = fm.id AND status = 'PENDING') as pending_visits "
+				+ "FROM family_members fm " + "JOIN users u ON fm.user_id = u.id "
+				+ "JOIN prisoners p ON fm.prisoner_id = p.id " + "WHERE p.is_deleted = 0 ORDER BY fm.id DESC";
+		try (Connection conn = DBConnection.getConnection();
+				PreparedStatement ps = conn.prepareStatement(sql);
+				ResultSet rs = ps.executeQuery()) {
+			while (rs.next()) {
+				FamilyMember fm = mapRowToFamilyMember(rs);
+				fm.setTotalVisits(rs.getInt("total_visits"));
+				fm.setPendingVisits(rs.getInt("pending_visits"));
+				list.add(fm);
+			}
+		}
+		return list;
+	}
+
 	private FamilyMember mapRowToFamilyMember(ResultSet rs) throws SQLException {
 		FamilyMember fm = new FamilyMember();
 		fm.setId(rs.getInt("id"));

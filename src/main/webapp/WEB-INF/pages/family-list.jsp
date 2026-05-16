@@ -11,58 +11,61 @@
     <meta charset="UTF-8">
     <title>Family Management | PMS Nepal</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="<%= contextPath %>/css/theme.css">
-    <style>
-        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-        .card { background: white; border-radius: 12px; border: 1px solid #d0d9ee; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .data-table { width: 100%; border-collapse: collapse; }
-        .data-table th { background: #f4f6fb; padding: 12px 16px; text-align: left; font-size: 11px; text-transform: uppercase; color: #5a7099; border-bottom: 1px solid #d0d9ee; }
-        .data-table td { padding: 14px 16px; border-bottom: 1px solid #e8edf7; font-size: 13px; }
-        .btn-view { color: #3a6fd8; text-decoration: none; font-weight: 500; }
-        .btn-view:hover { text-decoration: underline; }
-    </style>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/theme.css">
 </head>
-<body class="bg-cloud">
-    <div style="padding: 30px; max-width: 1200px; margin: 0 auto;">
-        <div class="page-header">
-            <div>
-                <h1 style="font-size: 24px; color: #1a2744;">Family Management</h1>
-                <p style="color: #5a7099; font-size: 14px;">View and manage registered family portal accounts</p>
-            </div>
-            <a href="<%= contextPath %>/admin-dashboard" style="color: #5a7099; text-decoration: none; font-size: 14px;">← Back to Dashboard</a>
+<body>
+<div class="layout">
+    <jsp:include page="/WEB-INF/pages/common/sidebar.jsp" />
+    <div class="main-wrapper">
+        <div class="topbar">
+            <button class="mobile-menu-btn" onclick="openSidebar()">
+                <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <div class="topbar-title">Family Management</div>
         </div>
 
-        <div class="card">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Family Name</th>
-                        <th>Prisoner ID</th>
-                        <th>Prisoner Name</th>
-                        <th>Relation</th>
-                        <th>Email / Username</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% if (families == null || families.isEmpty()) { %>
-                        <tr><td colspan="6" style="text-align:center; padding: 40px; color: #8e9ec1;">No family records found.</td></tr>
-                    <% } else { 
-                        for (FamilyMember f : families) { %>
+        <div class="page-content">
+            <div class="page-header">
+                <div>
+                    <h1>Family Members</h1>
+                    <p>Manage registered family portal accounts</p>
+                </div>
+            </div>
+
+            <div class="table-card">
+                <table class="data-table">
+                    <thead>
                         <tr>
-                            <td style="font-weight: 500;"><%= f.getUser().getFullName() %></td>
-                            <td><code><%= f.getPrisoner().getPrisonerId() %></code></td>
-                            <td><%= f.getPrisoner().getFullName() %></td>
-                            <td><%= f.getRelation() %></td>
-                            <td style="color: #5a7099;"><%= f.getUser().getEmail() %></td>
-                            <td>
-                                <a href="<%= contextPath %>/family-list?id=<%= f.getId() %>" class="btn-view">View Details & History</a>
-                            </td>
+                            <th>Family Member</th>
+                            <th>Relation</th>
+                            <th>Prisoner</th>
+                            <th>Visits (Total/Pending)</th>
+                            <th>Actions</th>
                         </tr>
-                    <% } } %>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <% if (families == null || families.isEmpty()) { %>
+                            <tr><td colspan="5" class="empty-state">No family records found.</td></tr>
+                        <% } else { 
+                            for (FamilyMember f : families) { %>
+                            <tr>
+                                <td class="text-bold"><%= f.getUser().getFullName() %></td>
+                                <td><%= f.getRelation() %></td>
+                                <td><%= f.getPrisoner().getFullName() %></td>
+                                <td>
+                                    <span class="badge badge-info"><%= f.getTotalVisits() %> Total</span>
+                                    <% if(f.getPendingVisits() > 0) { %>
+                                        <span class="badge badge-warn"><%= f.getPendingVisits() %> Pending</span>
+                                    <% } %>
+                                </td>
+                                <td><a href="<%= contextPath %>/family-list?id=<%= f.getId() %>" class="btn btn-secondary btn-sm">View Details</a></td>
+                            </tr>
+                        <% } } %>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
+</div>
 </body>
 </html>

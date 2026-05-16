@@ -36,6 +36,7 @@ public class VisitManagementController extends HttpServlet {
         try {
             List<VisitRequest> pendingRequests = visitDAO.findAllPending();
             request.setAttribute("pendingRequests", pendingRequests);
+            request.setAttribute("activePage", "visits");
             request.getRequestDispatcher("/WEB-INF/pages/visit-management.jsp").forward(request, response);
         } catch (SQLException e) {
             e.printStackTrace();

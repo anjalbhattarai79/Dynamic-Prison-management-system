@@ -47,6 +47,7 @@ public class AddPrisonerController extends HttpServlet {
 
 		request.setAttribute("role", role);
 		request.setAttribute("userName", user.getFullName() != null ? user.getFullName() : "User");
+		request.setAttribute("activePage", "prisoners");
 		request.getRequestDispatcher("/WEB-INF/pages/add-prisoner.jsp").forward(request, response);
 	}
 

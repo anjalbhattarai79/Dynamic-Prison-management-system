@@ -7,6 +7,8 @@ public class FamilyMember {
     private String relation;
     private String phone;
     private String address;
+    private int totalVisits;
+    private int pendingVisits;
 
     public int getId() {
         return id;
@@ -54,5 +56,21 @@ public class FamilyMember {
 
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    public int getTotalVisits() {
+        return totalVisits;
+    }
+
+    public void setTotalVisits(int totalVisits) {
+        this.totalVisits = totalVisits;
+    }
+
+    public int getPendingVisits() {
+        return pendingVisits;
+    }
+
+    public void setPendingVisits(int pendingVisits) {
+        this.pendingVisits = pendingVisits;
     }
 }

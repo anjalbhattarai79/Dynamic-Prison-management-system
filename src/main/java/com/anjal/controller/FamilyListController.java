@@ -43,8 +43,9 @@ public class FamilyListController extends HttpServlet {
     private void showFamilyList(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
-            List<FamilyMember> families = familyDAO.findAllWithPrisonerDetails();
+            List<FamilyMember> families = familyDAO.findAllWithVisitStats();
             request.setAttribute("families", families);
+            request.setAttribute("activePage", "families");
             request.getRequestDispatcher("/WEB-INF/pages/family-list.jsp").forward(request, response);
         } catch (SQLException e) {
             e.printStackTrace();

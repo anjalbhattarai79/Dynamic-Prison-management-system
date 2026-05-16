@@ -58,6 +58,7 @@ public class AdminDashboardController extends HttpServlet {
 		request.setAttribute("totalFamilies", totalFamilies);
 		request.setAttribute("pendingRequests", pendingRequests);
 		request.setAttribute("approvedVisits", approvedVisits);
+		request.setAttribute("activePage", "dashboard");
 
 		request.setAttribute("recentPrisoners", dashboardService.getRecentPrisoners(5));
 		request.setAttribute("visitRequests", dashboardService.getPendingVisitRequests(5));

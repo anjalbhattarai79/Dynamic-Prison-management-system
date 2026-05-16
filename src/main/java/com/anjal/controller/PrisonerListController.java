@@ -50,6 +50,7 @@ public class PrisonerListController extends HttpServlet {
 		request.setAttribute("prisonersJson", buildPrisonersJson(prisonerService.findAll()));
 		request.setAttribute("role", role);
 		request.setAttribute("userName", user.getFullName() != null ? user.getFullName() : "User");
+		request.setAttribute("activePage", "prisoners");
 		request.getRequestDispatcher("/WEB-INF/pages/prisoner-list.jsp").forward(request, response);
 	}
 

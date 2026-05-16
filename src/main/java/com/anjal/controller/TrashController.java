@@ -40,6 +40,7 @@ public class TrashController extends HttpServlet {
 		request.setAttribute("trashedJson", buildTrashedJson(prisonerService.findTrashed()));
 		request.setAttribute("role", role);
 		request.setAttribute("userName", user.getFullName() != null ? user.getFullName() : "User");
+		request.setAttribute("activePage", "trash");
 		request.getRequestDispatcher("/WEB-INF/pages/trash.jsp").forward(request, response);
 	}
 

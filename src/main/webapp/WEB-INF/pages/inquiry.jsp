@@ -1,15 +1,10 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ page import="java.util.*" %>
-<%@ page import="com.anjal.model.Prisoner" %>
 <%@ page import="com.anjal.model.User" %>
 
 <%
 String contextPath = request.getContextPath();
 User user = (User) session.getAttribute("loggedInUser");
 String familyName = (user != null) ? user.getFullName() : "Family Member";
-
-List<Prisoner> linkedPrisoners = (List<Prisoner>) request.getAttribute("linkedPrisoners");
-String error = (String) request.getAttribute("error");
 %>
 
 <!DOCTYPE html>
@@ -17,7 +12,7 @@ String error = (String) request.getAttribute("error");
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Request Visit | Family Portal</title>
+    <title>Inquiries | Family Portal</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
     <style>
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -36,7 +31,7 @@ String error = (String) request.getAttribute("error");
         }
         html,body{height:100%;font-family:'DM Sans',sans-serif;color:var(--text-main);background:var(--cloud)}
         .layout{display:flex;min-height:100vh}
-
+        
         /* ── Sidebar ── */
         .sidebar{
             width:var(--sidebar-w);min-height:100vh;background:var(--navy);
@@ -49,14 +44,14 @@ String error = (String) request.getAttribute("error");
         .logo-icon svg{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:1.8}
         .logo-text h2{font-family:'Playfair Display',serif;font-size:14px;font-weight:600;color:#fff;line-height:1.2}
         .logo-text p{font-size:10px;color:rgba(255,255,255,.45);letter-spacing:.08em;text-transform:uppercase}
-
+        
         .sidebar-nav{flex:1;padding:16px 0;overflow-y:auto}
         .nav-section-label{padding:8px 24px 4px;font-size:10px;color:rgba(255,255,255,.30);letter-spacing:.12em;text-transform:uppercase;font-weight:500}
         .nav-item{display:flex;align-items:center;gap:12px;padding:10px 24px;color:rgba(255,255,255,.65);text-decoration:none;font-size:13px;font-weight:400;border-left:3px solid transparent;transition:all var(--transition)}
         .nav-item:hover{color:#fff;background:rgba(255,255,255,.06)}
         .nav-item.active{color:#fff;background:rgba(58,111,216,.25);border-left-color:var(--blue-light);font-weight:500}
         .nav-item svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7}
-
+        
         .sidebar-footer{padding:16px 24px;border-top:1px solid rgba(255,255,255,.08)}
         .user-info{display:flex;align-items:center;gap:10px}
         .user-avatar{width:34px;height:34px;background:linear-gradient(135deg,var(--blue-acc),var(--blue-light));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff}
@@ -66,31 +61,22 @@ String error = (String) request.getAttribute("error");
         .logout-btn:hover{color:rgba(255,255,255,.8)}
         .logout-btn svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2}
 
-        .main-wrapper{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh} 
-        .topbar{height:var(--header-h);background:var(--white);border-bottom:1px solid var(--border-light);display:flex;align-items:center;padding:0 28px}        .topbar-title{font-size:16px;font-weight:600}
+        /* ── Main ── */
+        .main-wrapper{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+        .topbar{height:var(--header-h);background:var(--white);border-bottom:1px solid var(--border-light);display:flex;align-items:center;padding:0 28px;gap:16px;position:sticky;top:0;z-index:50}
+        .topbar-title{font-size:16px;font-weight:600}
 
-        .page-content{padding:28px;flex:1;max-width:800px;margin:0 auto}
-        .card{background:var(--white);border-radius:var(--radius);border:1px solid var(--border-light);box-shadow:0 2px 8px rgba(26,39,68,.07);padding:28px}
+        .page-content{padding:28px;flex:1;display:flex;align-items:center;justify-content:center;text-align:center}
         
-        .form-header{margin-bottom:24px}
-        .form-header h1{font-size:20px;font-weight:600;margin-bottom:6px}
-        .form-header p{font-size:13px;color:var(--text-sub)}
-
-        .form-group{margin-bottom:18px}
-        label{display:block;font-size:13px;font-weight:500;margin-bottom:6px;color:var(--text-main)}
-        select, input, textarea{
-            width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);
-            font-family:inherit;font-size:13px;transition:border-color var(--transition);outline:none
-        }
-        select:focus, input:focus, textarea:focus{border-color:var(--blue-acc)}
-        textarea{resize:vertical;min-height:100px}
-
-        .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:11px 24px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;text-decoration:none;transition:all var(--transition);border:none;width:100%}
-        .btn-primary{background:linear-gradient(135deg,var(--navy),var(--blue-acc));color:#fff}
-        .btn-primary:hover{opacity:.9;transform:translateY(-1px)}
-        .btn-secondary{background:var(--white);color:var(--text-main);border:1px solid var(--border);margin-top:10px}
-
-        .error-msg{background:var(--error-bg);color:var(--error);padding:12px;border-radius:var(--radius-sm);font-size:13px;margin-bottom:18px}
+        .placeholder-card{background:white;padding:60px 40px;border-radius:20px;box-shadow:0 2px 8px rgba(26,39,68,.07);max-width:500px;border:1px solid var(--border-light)}
+        .placeholder-icon{width:80px;height:80px;background:var(--cloud);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;color:var(--blue-acc)}
+        .placeholder-icon svg{width:40px;height:40px;stroke:currentColor;fill:none;stroke-width:1.5}
+        .placeholder-card h1{font-family:'Playfair Display',serif;font-size:28px;color:var(--navy);margin-bottom:12px}
+        .placeholder-card p{color:var(--text-sub);line-height:1.6;font-size:15px;margin-bottom:24px}
+        .status-badge{display:inline-block;padding:6px 14px;background:var(--blue-pale);color:var(--blue-acc);border-radius:30px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px;background:#eef4fd}
+        
+        .btn-back{display:inline-flex; border:1.5px solid var(--border); border-radius:10px; padding:10px 20px; color:var(--navy); font-weight:500; background:white; text-decoration:none; transition: all var(--transition)}
+        .btn-back:hover{background: var(--cloud); transform: translateY(-1px)}
     </style>
 </head>
 <body>
@@ -109,11 +95,11 @@ String error = (String) request.getAttribute("error");
                 <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
                 Dashboard
             </a>
-            <a href="<%= contextPath %>/family/request-visit" class="nav-item active">
+            <a href="<%= contextPath %>/family/request-visit" class="nav-item">
                 <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                 My Visits
             </a>
-            <a href="<%= contextPath %>/family/inquiries" class="nav-item">
+            <a href="<%= contextPath %>/family/inquiries" class="nav-item active">
                 <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                 Inquiries
             </a>
@@ -130,49 +116,21 @@ String error = (String) request.getAttribute("error");
     </nav>
 
     <div class="main-wrapper">
-        <div class="topbar"><div class="topbar-title">Request a Visit</div></div>
+        <div class="topbar">
+            <div class="topbar-title">Inquiries</div>
+        </div>
 
         <div class="page-content">
-            <div class="card">
-                <div class="form-header">
-                    <h1>New Visit Request</h1>
-                    <p>Fill out the form below to request a meeting with a prisoner.</p>
+            <div class="placeholder-card">
+                <div class="placeholder-icon">
+                    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                 </div>
-
-                <% if(error != null) { %>
-                    <div class="error-msg"><%= error %></div>
-                <% } %>
-
-                <form action="<%= contextPath %>/family/request-visit" method="POST">
-                    <div class="form-group">
-                        <label for="prisonerId">Select Prisoner</label>
-                        <select name="prisonerId" id="prisonerId" required>
-                            <option value="">-- Choose Prisoner --</option>
-                            <% if(linkedPrisoners != null) { 
-                                for(Prisoner p : linkedPrisoners) { %>
-                                <option value="<%= p.getId() %>"><%= p.getFullName() %> (<%= p.getPrisonerId() %>)</option>
-                            <% } } %>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="preferredDate">Preferred Visit Date</label>
-                        <input type="date" name="preferredDate" id="preferredDate" required min="<%= java.time.LocalDate.now().plusDays(1) %>">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="relation">Relationship to Prisoner</label>
-                        <input type="text" name="relation" id="relation" placeholder="e.g. Brother, Mother, Friend" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="message">Message / Reason for Visit (Optional)</label>
-                        <textarea name="message" id="message" placeholder="Briefly state why you'd like to visit..."></textarea>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary">Submit Visit Request</button>
-                    <a href="<%= contextPath %>/family-dashboard" class="btn btn-secondary">Cancel</a>
-                </form>
+                <span class="status-badge">Under Construction</span>
+                <h1>Coming Soon</h1>
+                <p>We are working hard to bring you the Inquiry system. This feature will allow you to communicate directly with prison authorities regarding your loved ones.</p>
+                <a href="<%= contextPath %>/family-dashboard" class="btn-back">
+                    Back to Dashboard
+                </a>
             </div>
         </div>
     </div>

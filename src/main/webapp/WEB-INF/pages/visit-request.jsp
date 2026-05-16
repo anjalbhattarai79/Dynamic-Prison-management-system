@@ -9,6 +9,7 @@ User user = (User) session.getAttribute("loggedInUser");
 String familyName = (user != null) ? user.getFullName() : "Family Member";
 
 List<Prisoner> linkedPrisoners = (List<Prisoner>) request.getAttribute("linkedPrisoners");
+Prisoner selectedPrisoner = (Prisoner) request.getAttribute("selectedPrisoner");
 String error = (String) request.getAttribute("error");
 %>
 
@@ -145,14 +146,21 @@ String error = (String) request.getAttribute("error");
 
                 <form action="<%= contextPath %>/family/request-visit" method="POST">
                     <div class="form-group">
-                        <label for="prisonerId">Select Prisoner</label>
-                        <select name="prisonerId" id="prisonerId" required>
-                            <option value="">-- Choose Prisoner --</option>
-                            <% if(linkedPrisoners != null) { 
-                                for(Prisoner p : linkedPrisoners) { %>
-                                <option value="<%= p.getId() %>"><%= p.getFullName() %> (<%= p.getPrisonerId() %>)</option>
-                            <% } } %>
-                        </select>
+                        <label>Prisoner</label>
+                        <% if(selectedPrisoner != null) { %>
+                            <div style="padding:10px 14px; background:var(--cloud); border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-weight:500; color:var(--text-main)">
+                                <%= selectedPrisoner.getFullName() %> (<%= selectedPrisoner.getPrisonerId() %>)
+                            </div>
+                            <input type="hidden" name="prisonerId" value="<%= selectedPrisoner.getId() %>">
+                        <% } else { %>
+                            <select name="prisonerId" id="prisonerId" required>
+                                <option value="">-- Choose Prisoner --</option>
+                                <% if(linkedPrisoners != null) { 
+                                    for(Prisoner p : linkedPrisoners) { %>
+                                    <option value="<%= p.getId() %>"><%= p.getFullName() %> (<%= p.getPrisonerId() %>)</option>
+                                <% } } %>
+                            </select>
+                        <% } %>
                     </div>
 
                     <div class="form-group">

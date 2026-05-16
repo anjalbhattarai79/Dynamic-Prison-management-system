@@ -37,6 +37,9 @@ public class VisitRequestController extends HttpServlet {
 
         try {
             List<Prisoner> linkedPrisoners = familyDAO.getLinkedPrisoners(loggedInUser.getId());
+            if (linkedPrisoners != null && !linkedPrisoners.isEmpty()) {
+                request.setAttribute("selectedPrisoner", linkedPrisoners.get(0));
+            }
             request.setAttribute("linkedPrisoners", linkedPrisoners);
             request.getRequestDispatcher("/WEB-INF/pages/visit-request.jsp").forward(request, response);
         } catch (SQLException e) {

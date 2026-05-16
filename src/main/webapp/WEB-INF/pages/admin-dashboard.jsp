@@ -34,7 +34,6 @@ Integer approvedVisits = (Integer) request.getAttribute("approvedVisits");
 
 List<PrisonerSummary> recentPrisoners = (List<PrisonerSummary>) request.getAttribute("recentPrisoners");
 List<VisitRequestSummary> visitRequests = (List<VisitRequestSummary>) request.getAttribute("visitRequests");
-List<ActivitySummary> activities = (List<ActivitySummary>) request.getAttribute("activities");
 
 if (totalPrisoners == null) totalPrisoners = 0;
 if (activePrisoners == null) activePrisoners = 0;
@@ -270,23 +269,9 @@ if (approvedVisits == null) approvedVisits = 0;
                 Visit Requests
                 <span class="nav-badge" id="pendingBadge"><%= pendingRequests %></span>
             </a>
-            <a href="activity-tracking.jsp" class="nav-item">
-                <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                Activity Tracking
-            </a>
-            <a href="notifications.jsp" class="nav-item">
-                <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                Notifications
-            </a>
-
-            <p class="nav-section-label" style="margin-top:8px">System</p>
             <a href="<%= contextPath %>/trash" class="nav-item">
                 <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                 Trash / Restore
-            </a>
-            <a href="reports.jsp" class="nav-item">
-                <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-                Reports & Logs
             </a>
         </div>
 
@@ -320,10 +305,6 @@ if (approvedVisits == null) approvedVisits = 0;
                 <div class="icon-btn" title="Search">
                     <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 </div>
-                <a href="notifications.jsp" class="icon-btn" title="Notifications">
-                    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                    <span class="notif-dot"></span>
-                </a>
             </div>
         </div>
 
@@ -335,10 +316,6 @@ if (approvedVisits == null) approvedVisits = 0;
                     <p>System overview and quick management access</p>
                 </div>
                 <div style="display:flex;gap:10px;flex-wrap:wrap">
-                    <a href="reports.jsp" class="btn btn-secondary">
-                        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-                        Reports
-                    </a>
                     <a href="<%= contextPath %>/add-prisoner" class="btn btn-primary">
                         <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                         Add Prisoner
@@ -510,43 +487,10 @@ if (approvedVisits == null) approvedVisits = 0;
                                 <div class="quick-btn-icon purple"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></div>
                                 Trash & Restore
                             </a>
-                            <a href="reports.jsp" class="quick-btn">
-                                <div class="quick-btn-icon blue"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
-                                View Reports
-                            </a>
                             <a href="<%= contextPath %>/prisoner-list?search=true" class="quick-btn">
                                 <div class="quick-btn-icon green"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
                                 Search Records
                             </a>
-                        </div>
-                    </div>
-
-                    <!-- Recent Activity Feed -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h3>Recent Activity</h3>
-                            <a href="reports.jsp">View logs →</a>
-                        </div>
-                        <div class="activity-list" id="activityFeed">
-                            <%
-                                if (activities == null || activities.isEmpty()) {
-                            %>
-                            <div style="padding:20px;text-align:center;color:var(--text-light);font-size:13px">No recent activity</div>
-                            <%
-                                } else {
-                                    for (ActivitySummary a : activities) {
-                            %>
-                            <div class="activity-item">
-                                <div class="activity-dot <%= a.getType() %>"></div>
-                                <div class="activity-body">
-                                    <p><%= a.getDescription() %></p>
-                                    <span><%= a.getTimeAgo() %> · <%= a.getPerformedBy() %></span>
-                                </div>
-                            </div>
-                            <%
-                                    }
-                                }
-                            %>
                         </div>
                     </div>
                 </div>

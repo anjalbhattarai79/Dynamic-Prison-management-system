@@ -61,7 +61,6 @@ public class AdminDashboardController extends HttpServlet {
 
 		request.setAttribute("recentPrisoners", dashboardService.getRecentPrisoners(5));
 		request.setAttribute("visitRequests", dashboardService.getPendingVisitRequests(5));
-		request.setAttribute("activities", dashboardService.getRecentActivities(6));
 
 		// 5. Forward to JSP
 		request.getRequestDispatcher("/WEB-INF/pages/admin-dashboard.jsp").forward(request, response);

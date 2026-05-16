@@ -9,60 +9,180 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Family Management | PMS Nepal</title>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="<%= contextPath %>/css/theme.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family Management | Prison Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
     <style>
-        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-        .card { background: white; border-radius: 12px; border: 1px solid #d0d9ee; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .data-table { width: 100%; border-collapse: collapse; }
-        .data-table th { background: #f4f6fb; padding: 12px 16px; text-align: left; font-size: 11px; text-transform: uppercase; color: #5a7099; border-bottom: 1px solid #d0d9ee; }
-        .data-table td { padding: 14px 16px; border-bottom: 1px solid #e8edf7; font-size: 13px; }
-        .btn-view { color: #3a6fd8; text-decoration: none; font-weight: 500; }
-        .btn-view:hover { text-decoration: underline; }
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        :root{
+            --navy:#1a2744;--navy-mid:#243358;--navy-light:#2e4170;
+            --blue-acc:#3a6fd8;--blue-light:#4f85ec;--blue-pale:#e8eef9;
+            --steel:#5a7099;--mist:#e8edf7;--cloud:#f4f6fb;--white:#ffffff;
+            --border:#d0d9ee;--border-light:#e8edf7;
+            --text-main:#1a2744;--text-sub:#5a7099;--text-light:#8e9ec1;
+            --success:#1e7d5a;--success-bg:#edf7f3;--success-border:#a8dece;
+            --warn:#b07d10;--warn-bg:#fdf8ea;--warn-border:#f0d478;
+            --error:#c94040;--error-bg:#fef2f2;--error-border:#f5c0c0;
+            --info:#2a5fa5;--info-bg:#eef4fd;
+            --sidebar-w:260px;--header-h:64px;
+            --shadow-sm:0 2px 8px rgba(26,39,68,.07);--shadow-md:0 4px 16px rgba(26,39,68,.10);
+            --radius:12px;--radius-sm:8px;--transition:.2s ease
+        }
+        html,body{height:100%;font-family:'DM Sans',sans-serif;color:var(--text-main);background:var(--cloud)}
+        .layout{display:flex;min-height:100vh}
+        /* ── Sidebar ── */
+        .sidebar{
+            width:var(--sidebar-w);min-height:100vh;background:var(--navy);
+            display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;
+            z-index:100;transition:transform var(--transition)
+        }
+        .sidebar-logo{padding:20px 24px 16px;border-bottom:1px solid rgba(255,255,255,.08)}
+        .sidebar-logo-inner{display:flex;align-items:center;gap:10px}
+        .logo-icon{width:36px;height:36px;background:rgba(255,255,255,.12);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .logo-icon svg{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:1.8}
+        .logo-text h2{font-family:'Playfair Display',Georgia,serif;font-size:14px;font-weight:600;color:#fff;line-height:1.2}
+        .logo-text p{font-size:10px;color:rgba(255,255,255,.45);letter-spacing:.08em;text-transform:uppercase}
+        .sidebar-nav{flex:1;padding:16px 0;overflow-y:auto}
+        .nav-section-label{padding:8px 24px 4px;font-size:10px;color:rgba(255,255,255,.30);letter-spacing:.12em;text-transform:uppercase;font-weight:500}
+        .nav-item{display:flex;align-items:center;gap:12px;padding:10px 24px;color:rgba(255,255,255,.65);text-decoration:none;font-size:13px;font-weight:400;border-left:3px solid transparent;transition:all var(--transition);cursor:pointer}
+        .nav-item:hover{color:#fff;background:rgba(255,255,255,.06);border-left-color:rgba(255,255,255,.2)}
+        .nav-item.active{color:#fff;background:rgba(58,111,216,.25);border-left-color:var(--blue-light);font-weight:500}
+        .nav-item svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;flex-shrink:0}
+        .nav-badge{margin-left:auto;background:rgba(217,79,79,.85);color:#fff;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px}
+        .sidebar-footer{padding:16px 24px;border-top:1px solid rgba(255,255,255,.08)}
+        .user-info{display:flex;align-items:center;gap:10px}
+        .user-avatar{width:34px;height:34px;background:linear-gradient(135deg,var(--blue-acc),var(--blue-light));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;flex-shrink:0}
+        .user-details p{font-size:12.5px;color:#fff;font-weight:500;line-height:1.2}
+        .user-details span{font-size:10.5px;color:rgba(255,255,255,.45)}
+        .logout-btn{margin-left:auto;background:none;border:none;cursor:pointer;color:rgba(255,255,255,.4);padding:4px;transition:color var(--transition);display:flex}
+        .logout-btn:hover{color:rgba(255,255,255,.8)}
+        .logout-btn svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2}
+        
+        .main-wrapper{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+        .topbar{height:var(--header-h);background:var(--white);border-bottom:1px solid var(--border-light);display:flex;align-items:center;padding:0 28px;gap:16px;position:sticky;top:0;z-index:50;box-shadow:var(--shadow-sm)}
+        .topbar-title{font-size:16px;font-weight:600;color:var(--text-main)}
+        .page-content{padding:28px;flex:1}
+        .page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;gap:16px;flex-wrap:wrap}
+        .page-header h1{font-size:22px;font-weight:600;color:var(--text-main)}
+        .page-header p{font-size:13px;color:var(--text-sub);margin-top:3px}
+        
+        .card{background:var(--white);border-radius:var(--radius);border:1px solid var(--border-light);box-shadow:var(--shadow-sm);overflow:hidden}
+        .data-table{width:100%;border-collapse:collapse}
+        .data-table th{padding:12px 16px;font-size:11px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.08em;text-align:left;background:var(--cloud);border-bottom:1px solid var(--border-light)}
+        .data-table td{padding:14px 16px;font-size:13px;color:var(--text-main);border-bottom:1px solid var(--border-light)}
+        .btn-view{color:var(--blue-acc);text-decoration:none;font-weight:500}
+        .btn-view:hover{text-decoration:underline}
     </style>
 </head>
-<body class="bg-cloud">
-    <div style="padding: 30px; max-width: 1200px; margin: 0 auto;">
-        <div class="page-header">
-            <div>
-                <h1 style="font-size: 24px; color: #1a2744;">Family Management</h1>
-                <p style="color: #5a7099; font-size: 14px;">View and manage registered family portal accounts</p>
+<body>
+
+<div class="layout">
+    <!-- ══ SIDEBAR ══ -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <div class="sidebar-logo-inner">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </div>
+                <div class="logo-text">
+                    <h2>PMS Nepal</h2>
+                    <p>Admin Portal</p>
+                </div>
             </div>
-            <a href="<%= contextPath %>/admin-dashboard" style="color: #5a7099; text-decoration: none; font-size: 14px;">← Back to Dashboard</a>
         </div>
 
-        <div class="card">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Family Name</th>
-                        <th>Prisoner ID</th>
-                        <th>Prisoner Name</th>
-                        <th>Relation</th>
-                        <th>Email / Username</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% if (families == null || families.isEmpty()) { %>
-                        <tr><td colspan="6" style="text-align:center; padding: 40px; color: #8e9ec1;">No family records found.</td></tr>
-                    <% } else { 
-                        for (FamilyMember f : families) { %>
+        <div class="sidebar-nav">
+            <p class="nav-section-label">Overview</p>
+            <a href="<%= contextPath %>/admin-dashboard" class="nav-item">
+                <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                Dashboard
+            </a>
+
+            <p class="nav-section-label" style="margin-top:8px">Management</p>
+            <a href="<%= contextPath %>/prisoner-list" class="nav-item">
+                <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                Prisoners
+            </a>
+            <a href="staff-management.jsp" class="nav-item">
+                <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Staff
+            </a>
+            <a href="<%= contextPath %>/family-list" class="nav-item active">
+                <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                Family Members
+            </a>
+
+            <p class="nav-section-label" style="margin-top:8px">Operations</p>
+            <a href="<%= contextPath %>/admin/visit-management" class="nav-item">
+                <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                Visit Requests
+            </a>
+            <a href="<%= contextPath %>/trash" class="nav-item">
+                <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                Trash / Restore
+            </a>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar"><%= "A" %></div>
+                <div class="user-details">
+                    <p>Admin</p>
+                    <span>Administrator</span>
+                </div>
+                <a href="<%= contextPath %>/logout" class="logout-btn" title="Logout">
+                    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-wrapper">
+        <div class="topbar">
+            <div class="topbar-title">Family Management</div>
+        </div>
+
+        <div class="page-content">
+            <div class="page-header">
+                <div>
+                    <h1>Family Accounts</h1>
+                    <p>View and manage registered family portal accounts</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <table class="data-table">
+                    <thead>
                         <tr>
-                            <td style="font-weight: 500;"><%= f.getUser().getFullName() %></td>
-                            <td><code><%= f.getPrisoner().getPrisonerId() %></code></td>
-                            <td><%= f.getPrisoner().getFullName() %></td>
-                            <td><%= f.getRelation() %></td>
-                            <td style="color: #5a7099;"><%= f.getUser().getEmail() %></td>
-                            <td>
-                                <a href="<%= contextPath %>/family-list?id=<%= f.getId() %>" class="btn-view">View Details & History</a>
-                            </td>
+                            <th>Family Name</th>
+                            <th>Prisoner ID</th>
+                            <th>Prisoner Name</th>
+                            <th>Relation</th>
+                            <th>Email / Username</th>
+                            <th>Actions</th>
                         </tr>
-                    <% } } %>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <% if (families == null || families.isEmpty()) { %>
+                            <tr><td colspan="6" style="text-align:center; padding: 40px; color: var(--text-light);">No family records found.</td></tr>
+                        <% } else { 
+                            for (FamilyMember f : families) { %>
+                            <tr>
+                                <td style="font-weight: 500;"><%= f.getUser().getFullName() %></td>
+                                <td><code><%= f.getPrisoner().getPrisonerId() %></code></td>
+                                <td><%= f.getPrisoner().getFullName() %></td>
+                                <td><%= f.getRelation() %></td>
+                                <td style="color: var(--text-sub);"><%= f.getUser().getEmail() %></td>
+                                <td>
+                                    <a href="<%= contextPath %>/family-list?id=<%= f.getId() %>" class="btn-view">View Details</a>
+                                </td>
+                            </tr>
+                        <% } } %>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
+</div>
 </body>
 </html>

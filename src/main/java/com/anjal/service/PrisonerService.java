@@ -14,6 +14,7 @@ import com.anjal.model.DeletedPrisoner;
 import com.anjal.model.Prisoner;
 import com.anjal.model.User;
 import com.anjal.util.PasswordUtil;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Service for managing prisoners, backed by MySQL database.
@@ -23,6 +24,11 @@ public class PrisonerService {
     private final PrisonerDAO prisonerDAO = new PrisonerDAO();
     private final UserDAO userDAO = new UserDAO();
     private final FamilyDAO familyDAO = new FamilyDAO();
+    private static final DateTimeFormatter dtFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+
+    private String getTimestamp() {
+        return LocalDateTime.now().format(dtFormatter);
+    }
 
     public Prisoner save(Prisoner prisoner) {
         if (prisoner == null) {
@@ -38,7 +44,7 @@ public class PrisonerService {
 
             // Automatically create a default Family Portal account
             // Username (Email) = Prisoner ID, Password = Family@123
-            System.out.println("Creating default family user for prisoner: " + saved.getPrisonerId());
+            System.out.println("[" + getTimestamp() + "] [PROVISION] Creating default family portal for Prisoner: " + saved.getPrisonerId());
             String salt = PasswordUtil.generateSalt();
             String hash = PasswordUtil.hashPassword("Family@123", salt);
             User familyUser = userDAO.createFamilyUser(
@@ -49,11 +55,11 @@ public class PrisonerService {
             );
             
             if (familyUser != null) {
-                System.out.println("Family user created successfully. ID: " + familyUser.getId());
+                System.out.println("[" + getTimestamp() + "] [PROVISION] SUCCESS: Family User Account created. ID: " + familyUser.getId());
                 familyDAO.createDefaultFamilyMember(familyUser.getId(), saved.getId(), "Family Contact");
-                System.out.println("Family member link created.");
+                System.out.println("[" + getTimestamp() + "] [PROVISION] Linked Portal Account to Prisoner record.");
             } else {
-                System.err.println("Failed to create family user for prisoner: " + saved.getPrisonerId());
+                System.err.println("[" + getTimestamp() + "] [PROVISION] FAILED: Could not create family user for prisoner: " + saved.getPrisonerId());
             }
 
             return saved;

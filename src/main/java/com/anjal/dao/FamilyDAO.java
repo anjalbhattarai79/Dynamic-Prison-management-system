@@ -203,7 +203,7 @@ public class FamilyDAO {
 
 	public List<FamilyMember> findAllWithPrisonerDetails() throws SQLException {
 		List<FamilyMember> list = new ArrayList<>();
-		String sql = "SELECT fm.*, u.full_name as family_name, u.email as family_email, p.prisoner_id, p.full_name as prisoner_name "
+		String sql = "SELECT fm.*, fm.prisoner_id as internal_prisoner_id, u.full_name as family_name, u.email as family_email, p.prisoner_id, p.full_name as prisoner_name "
 				+ "FROM family_members fm " + "JOIN users u ON fm.user_id = u.id "
 				+ "JOIN prisoners p ON fm.prisoner_id = p.id " + "WHERE p.is_deleted = 0 ORDER BY fm.id DESC";
 		try (Connection conn = DBConnection.getConnection();
@@ -217,7 +217,7 @@ public class FamilyDAO {
 	}
 
 	public FamilyMember findById(int familyId) throws SQLException {
-		String sql = "SELECT fm.*, u.full_name as family_name, u.email as family_email, p.prisoner_id, p.full_name as prisoner_name "
+		String sql = "SELECT fm.*, fm.prisoner_id as internal_prisoner_id, u.full_name as family_name, u.email as family_email, p.prisoner_id, p.full_name as prisoner_name "
 				+ "FROM family_members fm " + "JOIN users u ON fm.user_id = u.id "
 				+ "JOIN prisoners p ON fm.prisoner_id = p.id " + "WHERE fm.id = ?";
 		try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -233,7 +233,7 @@ public class FamilyDAO {
 
 	public List<FamilyMember> findAllWithVisitStats() throws SQLException {
 		List<FamilyMember> list = new ArrayList<>();
-		String sql = "SELECT fm.*, u.full_name as family_name, u.email as family_email, p.prisoner_id, p.full_name as prisoner_name, "
+		String sql = "SELECT fm.*, fm.prisoner_id as internal_prisoner_id, u.full_name as family_name, u.email as family_email, p.prisoner_id, p.full_name as prisoner_name, "
 				+ "(SELECT COUNT(*) FROM visit_requests WHERE family_member_id = fm.id) as total_visits, "
 				+ "(SELECT COUNT(*) FROM visit_requests WHERE family_member_id = fm.id AND status = 'PENDING') as pending_visits "
 				+ "FROM family_members fm " + "JOIN users u ON fm.user_id = u.id "
@@ -265,8 +265,10 @@ public class FamilyDAO {
 		fm.setUser(user);
 
 		Prisoner prisoner = new Prisoner();
-		prisoner.setId(rs.getInt("prisoner_id"));
-		prisoner.setPrisonerId(rs.getString("prisoner_id"));
+		// Use explicit column label 'internal_prisoner_id' for numeric ID
+		prisoner.setId(rs.getInt("internal_prisoner_id"));
+		// Use 'prisoner_id' for string ID (NP-PMS-XXXX)
+		prisoner.setPrisonerId(rs.getString("prisoner_id")); 
 		prisoner.setFullName(rs.getString("prisoner_name"));
 		fm.setPrisoner(prisoner);
 
@@ -303,8 +305,6 @@ public class FamilyDAO {
 		p.setStatus(rs.getString("status"));
 		p.setEmergencyContact(rs.getString("emergency_contact"));
 		p.setPhotoDataUri(rs.getString("photo_data_uri"));
-		p.setHealthStatus(rs.getString("health_status") != null ? rs.getString("health_status") : "Healthy");
-		p.setMedicalNotes(rs.getString("medical_notes"));
 		p.setDeleted(rs.getBoolean("is_deleted"));
 		return p;
 	}

@@ -12,11 +12,19 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
-@WebServlet("/login")
+@WebServlet({ "/login", "/" })
 public class LoginController extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	private final AuthService authService = new AuthService();
+	private static final DateTimeFormatter dtFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+
+	private String getTimestamp() {
+		return LocalDateTime.now().format(dtFormatter);
+	}
 
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -82,6 +90,10 @@ public class LoginController extends HttpServlet {
 			} catch (java.sql.SQLException e) {
 				e.printStackTrace();
 			}
+		}
+
+		if (authUser != null) {
+			System.out.println("[" + getTimestamp() + "] [AUTH] Success: User " + authUser.getEmail() + " authenticated as " + authUser.getRole().getName());
 		}
 
 		response.sendRedirect(request.getContextPath() + resolveDashboardByRole(authUser));

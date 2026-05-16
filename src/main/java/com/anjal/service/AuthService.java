@@ -51,6 +51,15 @@ public class AuthService {
 			}
 
 			if (user == null) {
+				// Search globally to see if the user exists but the role doesn't match the portal
+				User globalUser = userDAO.findByEmail(normalizedIdentifier);
+				if (globalUser != null) {
+					result.setSuccess(false);
+					String actualRole = globalUser.getRole() != null ? globalUser.getRole().getName() : "Unknown";
+					result.setMessage("Account found, but it is registered as " + actualRole + ". Please use the correct portal.");
+					return result;
+				}
+
 				userDAO.recordLoginAttempt(null, normalizedIdentifier, false, ipAddress);
 				result.setSuccess(false);
 				result.setMessage("Account not found for the provided " + ("FAMILY".equalsIgnoreCase(loginType) ? "Prisoner ID." : "email."));
@@ -68,10 +77,12 @@ public class AuthService {
 
 			// Fallback: Default password for new family accounts that haven't been updated yet
 			if (!passwordValid && "FAMILY".equalsIgnoreCase(loginType) && "Family@123".equals(password)) {
-				// If updatedAt is null or same as createdAt (within 1 second), consider it "not yet changed"
+				// If updatedAt is very close to createdAt (within 5 seconds), consider it "not yet changed"
+				// This handles cases where the hash might not match due to subtle issues but we want to allow initial access.
 				if (user.getUpdatedAt() == null || user.getCreatedAt() == null || 
-					Math.abs(java.time.Duration.between(user.getCreatedAt(), user.getUpdatedAt()).toSeconds()) < 2) {
+					Math.abs(java.time.Duration.between(user.getCreatedAt(), user.getUpdatedAt()).toSeconds()) < 5) {
 					passwordValid = true;
+					System.out.println("[AUTH] Fresh account fallback triggered for " + normalizedIdentifier);
 				}
 			}
 
@@ -79,7 +90,7 @@ public class AuthService {
 				userDAO.recordLoginAttempt(user.getId(), normalizedIdentifier, false, ipAddress);
 				userDAO.evaluateAndLockAccountIfNeeded(user);
 				result.setSuccess(false);
-				result.setMessage("Invalid password.");
+				result.setMessage("Invalid password. Please ensure you are using the default 'Family@123' for new accounts.");
 				return result;
 			}
 

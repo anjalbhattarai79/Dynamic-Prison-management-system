@@ -6,6 +6,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,7 +16,14 @@ import com.anjal.util.DBConnection;
 
 public class PrisonerDAO {
 
+    private static final DateTimeFormatter dtFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+
+    private String getTimestamp() {
+        return LocalDateTime.now().format(dtFormatter);
+    }
+
     public List<Prisoner> findAll() throws SQLException {
+        long startTime = System.currentTimeMillis();
         List<Prisoner> prisoners = new ArrayList<>();
         String sql = "SELECT * FROM prisoners WHERE is_deleted = 0";
         try (Connection conn = DBConnection.getConnection();
@@ -24,21 +33,48 @@ public class PrisonerDAO {
                 prisoners.add(mapRowToPrisoner(rs));
             }
         }
+        long duration = System.currentTimeMillis() - startTime;
+        System.out.println("[" + getTimestamp() + "] [METRIC] findAll: Fetched " + prisoners.size() + " records in " + duration + "ms");
         return prisoners;
     }
 
     public Prisoner findByPrisonerId(String prisonerId) throws SQLException {
+        long startTime = System.currentTimeMillis();
         String sql = "SELECT * FROM prisoners WHERE prisoner_id = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, prisonerId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return mapRowToPrisoner(rs);
+                    Prisoner p = mapRowToPrisoner(rs);
+                    long duration = System.currentTimeMillis() - startTime;
+                    System.out.println("[" + getTimestamp() + "] [METRIC] findByPrisonerId: Fetched ID " + prisonerId + " in " + duration + "ms");
+                    return p;
                 }
             }
         }
         return null;
+    }
+
+    public List<Prisoner> search(String query) throws SQLException {
+        long startTime = System.currentTimeMillis();
+        List<Prisoner> prisoners = new ArrayList<>();
+        String sql = "SELECT * FROM prisoners WHERE is_deleted = 0 AND (prisoner_id LIKE ? OR full_name LIKE ? OR crime_type LIKE ?)";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            String searchPattern = "%" + query + "%";
+            ps.setString(1, searchPattern);
+            ps.setString(2, searchPattern);
+            ps.setString(3, searchPattern);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    prisoners.add(mapRowToPrisoner(rs));
+                }
+            }
+        }
+        long duration = System.currentTimeMillis() - startTime;
+        System.out.println("[" + getTimestamp() + "] [METRIC] search: Query '" + query + "' returned " + prisoners.size() + " results in " + duration + "ms");
+        return prisoners;
     }
 
     public void save(Prisoner p) throws SQLException {

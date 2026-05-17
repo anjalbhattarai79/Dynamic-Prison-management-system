@@ -135,11 +135,129 @@ public class PrisonerDAO {
     }
 
     public void permanentlyDelete(String prisonerId) throws SQLException {
-        String sql = "DELETE FROM prisoners WHERE prisoner_id = ?";
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, prisonerId);
-            ps.executeUpdate();
+        Prisoner p = findByPrisonerId(prisonerId);
+        if (p == null)
+            return;
+
+        Connection conn = null;
+        try {
+            conn = DBConnection.getConnection();
+            conn.setAutoCommit(false);
+
+            int id = p.getId();
+
+            // 1. Delete visit_schedule (via visit_requests)
+            String sql1 = "DELETE FROM visit_schedule WHERE visit_request_id IN (SELECT id FROM visit_requests WHERE prisoner_id = ?)";
+            try (PreparedStatement ps = conn.prepareStatement(sql1)) {
+                ps.setInt(1, id);
+                ps.executeUpdate();
+            }
+
+            // 2. Delete visit_requests
+            String sql2 = "DELETE FROM visit_requests WHERE prisoner_id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sql2)) {
+                ps.setInt(1, id);
+                ps.executeUpdate();
+            }
+
+            // 3. Delete prisoner_activities
+            String sql3 = "DELETE FROM prisoner_activities WHERE prisoner_id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sql3)) {
+                ps.setInt(1, id);
+                ps.executeUpdate();
+            }
+
+            // 4. Delete deleted_prisoners records
+            String sql4 = "DELETE FROM deleted_prisoners WHERE prisoner_id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sql4)) {
+                ps.setInt(1, id);
+                ps.executeUpdate();
+            }
+
+            // 5. Identify and handle Family Members and Users
+            List<Integer> familyMemberIds = new ArrayList<>();
+            List<Integer> familyUserIds = new ArrayList<>();
+            String sqlFindFM = "SELECT id, user_id FROM family_members WHERE prisoner_id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sqlFindFM)) {
+                ps.setInt(1, id);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        familyMemberIds.add(rs.getInt("id"));
+                        familyUserIds.add(rs.getInt("user_id"));
+                    }
+                }
+            }
+
+            // 6. Delete Inquiries (must be before family_members)
+            if (!familyMemberIds.isEmpty()) {
+                for (Integer fmId : familyMemberIds) {
+                    String sqlDeleteInq = "DELETE FROM inquiries WHERE family_member_id = ?";
+                    try (PreparedStatement ps = conn.prepareStatement(sqlDeleteInq)) {
+                        ps.setInt(1, fmId);
+                        ps.executeUpdate();
+                    }
+                }
+            }
+
+            // 7. Delete family_members links
+            String sql5 = "DELETE FROM family_members WHERE prisoner_id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sql5)) {
+                ps.setInt(1, id);
+                ps.executeUpdate();
+            }
+
+            // 8. Delete Family Users and their related data
+            if (!familyUserIds.isEmpty()) {
+                for (Integer userId : familyUserIds) {
+                    // Check if this user is a 'FAMILY' role user before deleting
+                    String sqlCheckRole = "SELECT r.name FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = ?";
+                    boolean isFamilyUser = false;
+                    try (PreparedStatement ps = conn.prepareStatement(sqlCheckRole)) {
+                        ps.setInt(1, userId);
+                        try (ResultSet rs = ps.executeQuery()) {
+                            if (rs.next() && "FAMILY".equalsIgnoreCase(rs.getString("name"))) {
+                                isFamilyUser = true;
+                            }
+                        }
+                    }
+
+                    if (isFamilyUser) {
+                        // Delete related user data
+                        String[] userRelatedTables = { "login_attempts", "notifications", "activity_logs" };
+                        for (String table : userRelatedTables) {
+                            String sqlDelete = "DELETE FROM " + table + " WHERE user_id = ?";
+                            try (PreparedStatement ps = conn.prepareStatement(sqlDelete)) {
+                                ps.setInt(1, userId);
+                                ps.executeUpdate();
+                            }
+                        }
+                        
+                        String sqlDeleteUser = "DELETE FROM users WHERE id = ?";
+                        try (PreparedStatement ps = conn.prepareStatement(sqlDeleteUser)) {
+                            ps.setInt(1, userId);
+                            ps.executeUpdate();
+                        }
+                    }
+                }
+            }
+
+            // 9. Finally delete the prisoner
+            String sql9 = "DELETE FROM prisoners WHERE id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sql9)) {
+                ps.setInt(1, id);
+                ps.executeUpdate();
+            }
+
+            conn.commit();
+        } catch (SQLException e) {
+            if (conn != null)
+                conn.rollback();
+            throw e;
+        } finally {
+            if (conn != null) {
+                conn.setAutoCommit(true);
+                conn.close();
+            }
         }
     }
 
